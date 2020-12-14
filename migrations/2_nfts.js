@@ -1,4 +1,4 @@
-const Nft = artifacts.require("NFT");
+const Nft = artifacts.require("Nft");
 
 module.exports = function (_deployer, _network) {
   if (_network === "development" || _network === "goerli") {

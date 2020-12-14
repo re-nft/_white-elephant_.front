@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract GanFaceNft is ERC721, ReentrancyGuard {
+contract Nft is ERC721, ReentrancyGuard {
   using Counters for Counters.Counter;
   Counters.Counter private __tokenIds;
 

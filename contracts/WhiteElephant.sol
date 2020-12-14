@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.5;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
 contract WhiteElephant is Ownable {
     struct Info {
-        ERC721 nft;
+        address nft;
         uint256 tokenId;
         uint8 orderNum;
         bool hasTicket;
@@ -92,7 +92,7 @@ contract WhiteElephant is Ownable {
         player.tokenId = info[_theirAddress].tokenId;
 
         info[_theirAddress].wasStolenFrom = true;
-        info[_theirAddress].nft = 0;
+        info[_theirAddress].nft = address(0);
         info[_theirAddress].tokenId = 0;
     }
 
@@ -103,7 +103,7 @@ contract WhiteElephant is Ownable {
         // ensure the order is respected
 
         // todo: integrate chainlink. right now linear unwrapping
-        player.nft = nfts[currNftToUnwrap].nft;
+        player.nft = address(nfts[currNftToUnwrap].nft);
         player.tokenId = nfts[currNftToUnwrap].tokenId;
         currNftToUnwrap++;
         // ----
@@ -123,13 +123,13 @@ contract WhiteElephant is Ownable {
         require(player.hasTicket == true, "you must have a ticket");
         require(player.wasStolenFrom == true, "you must have been stolen from");
         require(
-            player.nft == address(0),
+            address(player.nft) == address(0),
             "you have already unwrapped after steal"
         );
         require(player.tokenId == 0, "weird error");
 
         // todo: integrate chainlink for random unwrapping
-        player.nft = nfts[currNftToUnwrap].nft;
+        player.nft = address(nfts[currNftToUnwrap].nft);
         player.tokenId = nfts[currNftToUnwrap].tokenId;
         currNftToUnwrap++;
         // ------
@@ -139,7 +139,11 @@ contract WhiteElephant is Ownable {
         // todo: require christmas
         for (uint256 i = 0; i < playas.length; i++) {
             Info storage player = info[playas[i]];
-            player.nft.transferFrom(address(this), playas[i], player.tokenId);
+            ERC721(player.nft).transferFrom(
+                address(this),
+                playas[i],
+                player.tokenId
+            );
         }
     }
 }
