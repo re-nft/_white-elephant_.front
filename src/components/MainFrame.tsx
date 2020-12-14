@@ -1,13 +1,12 @@
 import React from "react";
+import { Box } from "@material-ui/core";
 import frame from "../public/img/frame.png";
-import question from "../public/img/question.png";
 
 export const MainFrame = () => {
   return (
-    <div>
+    <Box>
       <span
         style={{
-          backgroundImage: `url(${question})`,
           width: "25vw",
           position: "relative",
         }}
@@ -24,15 +23,6 @@ export const MainFrame = () => {
           src={frame}
         />
       </span>
-      <img
-        src={question}
-        style={{
-          height: "23%",
-          bottom: "44%",
-          left: "46%",
-          position: "absolute",
-        }}
-      />
-    </div>
+    </Box>
   );
 };

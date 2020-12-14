@@ -1,34 +1,33 @@
 import React from "react";
-import { Button } from "react-bootstrap";
+import { Button, Box } from "@material-ui/core";
 
 export const Intro = () => {
   return (
-    <div>
-      <div style={{ width: "25vw" }}>
+    <Box
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+      }}
+    >
+      <Box>
         <h1>Rules</h1>
         <ul>
-          <li>Buy a ticket into the gallery</li>
-          <li>Lorem Ipsum</li>
-          <li>Lorem Ipsum</li>
-          <li>Lorem Ipsum</li>
+          <li>1. Single ticket per unique address</li>
+          <li>2. On Christmas day, take turns to unwrap or steal</li>
+          <li>3. By the end of the event, presents get delivered by Santa</li>
+          <li>Ho ho ho, with ❤️ reNFT Labs</li>
         </ul>
-      </div>
-      <div
-        style={{
-          width: "25vw",
-          display: "flex",
-          justifyContent: "center",
-          flexDirection: "column",
-        }}
-      >
+      </Box>
+      <Box>
         <h1 style={{ margin: "auto" }}>0.001 ETH</h1>
         <Button
-          variant="primary"
+          variant="outlined"
           style={{ height: "40px", background: "lightblue" }}
         >
           Buy ETH
-        </Button>{" "}
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Box>
   );
 };
