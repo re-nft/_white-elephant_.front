@@ -7,7 +7,14 @@ import { Intro } from "./components/Intro";
 
 function App() {
   return (
-    <Box style={{ display: "flex", justifyContent: "space-around", flex: 1 }}>
+    <Box
+      style={{
+        display: "flex",
+        justifyContent: "space-around",
+        flex: 1,
+        paddingTop: "4em",
+      }}
+    >
       <Intro />
       <MainFrame />
       <Steal />

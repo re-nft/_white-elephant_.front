@@ -3,7 +3,7 @@ import { Button, Box } from "@material-ui/core";
 
 import Ticket from "./Ticket";
 
-export const Intro = () => {
+export const Intro: React.FC = () => {
   return (
     <Box
       style={{
@@ -29,15 +29,7 @@ export const Intro = () => {
           <li>Ho ho ho, with ❤️ reNFT Labs</li>
         </ul>
       </Box>
-      <Ticket>
-        <h1 style={{ margin: "auto" }}>0.001 ETH</h1>
-        <Button
-          variant="outlined"
-          style={{ height: "40px", background: "lightblue" }}
-        >
-          Buy ETH
-        </Button>
-      </Ticket>
+      <Ticket />
     </Box>
   );
 };

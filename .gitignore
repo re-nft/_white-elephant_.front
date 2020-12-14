@@ -27,4 +27,4 @@ yarn.lock
 .vscode
 bin/contracts
 build
-.d.ts
+*.d.ts
