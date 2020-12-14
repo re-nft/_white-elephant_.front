@@ -11,6 +11,7 @@
     "@types/react-dom": "^16.9.8",
     "axios": "^0.21.0",
     "bootstrap": "^4.5.3",
+    "node-sass": "^4.0.0",
     "react": "^17.0.1",
     "react-blur": "^0.6.0",
     "react-bootstrap": "^1.4.0",
