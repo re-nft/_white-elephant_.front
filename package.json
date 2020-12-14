@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@types/node": "^12.19.9",
-    "@types/styled-components": "^5.1.5"
+    "@types/styled-components": "^5.1.5",
+    "truffle": "^5.1.57"
   }
 }
