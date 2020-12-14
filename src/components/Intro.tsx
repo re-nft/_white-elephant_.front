@@ -1,16 +1,26 @@
 import React from "react";
 import { Button, Box } from "@material-ui/core";
 
+import Ticket from "./Ticket";
+
 export const Intro = () => {
   return (
     <Box
       style={{
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
+        justifyContent: "space-around",
+        alignItems: "space-around",
       }}
     >
-      <Box>
+      <Box
+        style={{
+          border: "2px solid black",
+          padding: "16px",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <h1>Rules</h1>
         <ul>
           <li>1. Single ticket per unique address</li>
@@ -19,7 +29,7 @@ export const Intro = () => {
           <li>Ho ho ho, with ❤️ reNFT Labs</li>
         </ul>
       </Box>
-      <Box>
+      <Ticket>
         <h1 style={{ margin: "auto" }}>0.001 ETH</h1>
         <Button
           variant="outlined"
@@ -27,7 +37,7 @@ export const Intro = () => {
         >
           Buy ETH
         </Button>
-      </Box>
+      </Ticket>
     </Box>
   );
 };

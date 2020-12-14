@@ -1,18 +1,17 @@
 import React from "react";
-import "./styles/reset.scss";
+import { Box } from "@material-ui/core";
+
 import { Steal } from "./components/Steal";
 import { MainFrame } from "./components/MainFrame";
 import { Intro } from "./components/Intro";
 
 function App() {
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-around" }}>
-        <Intro />
-        <MainFrame />
-        <Steal />
-      </div>
-    </div>
+    <Box style={{ display: "flex", justifyContent: "space-around", flex: 1 }}>
+      <Intro />
+      <MainFrame />
+      <Steal />
+    </Box>
   );
 }
 

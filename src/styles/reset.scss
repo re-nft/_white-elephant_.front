@@ -91,20 +91,6 @@ video {
   vertical-align: baseline;
 }
 
-article,
-aside,
-details,
-figcaption,
-figure,
-footer,
-header,
-hgroup,
-menu,
-nav,
-section {
-  display: block;
-}
-
 body {
   line-height: 1.5;
 }
@@ -133,7 +119,6 @@ table {
 }
 
 body {
-  height: 100%;
   background: linear-gradient(
     to bottom,
     white,
@@ -145,6 +130,10 @@ body {
     white,
     cyan
   );
+}
+
+#react-root {
+  height: 100vh;
 }
 
 .active-tab {
