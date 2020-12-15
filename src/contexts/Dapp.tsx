@@ -1,10 +1,11 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useCallback, useEffect } from "react";
 import { ethers } from "ethers";
 
 type DappContextType = {
   provider?: ethers.providers.Web3Provider;
   signer?: ethers.providers.JsonRpcSigner;
   connect: () => void;
+  address?: string;
   // addresses?: NetworkSpecificAddresses;
   // abis?: NetworkSpecificAbis;
 };
@@ -18,8 +19,15 @@ const DefaultDappContext = {
 const DappContext = createContext<DappContextType>(DefaultDappContext);
 
 export const DappContextProvider: React.FC = ({ children }) => {
-  const [provider, setProvider] = useState<ethers.providers.Web3Provider>();
-  const [signer, setSigner] = useState<ethers.providers.JsonRpcSigner>();
+  const [provider, setProvider] = useState<DappContextType["provider"]>();
+  const [signer, setSigner] = useState<DappContextType["signer"]>();
+  const [address, setAddress] = useState<DappContextType["address"]>();
+
+  const getAddress = useCallback(async () => {
+    if (!signer) return;
+    const _address = await signer.getAddress();
+    setAddress(_address);
+  }, [signer]);
 
   const connect = () => {
     //@ts-ignore
@@ -43,8 +51,13 @@ export const DappContextProvider: React.FC = ({ children }) => {
     setSigner(_signer);
   };
 
+  useEffect(() => {
+    if (address) return;
+    getAddress();
+  }, [address, getAddress]);
+
   return (
-    <DappContext.Provider value={{ provider, connect, signer }}>
+    <DappContext.Provider value={{ provider, connect, signer, address }}>
       {children}
     </DappContext.Provider>
   );

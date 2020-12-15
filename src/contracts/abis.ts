@@ -1,6 +1,12 @@
+import whiteElephant from "./abis/WhiteElephant.json";
+
 const abis = {
-  goerli: {},
-  live: {},
+  goerli: {
+    whiteElephant: whiteElephant.abi,
+  },
+  live: {
+    whiteElephant: whiteElephant.abi,
+  },
 };
 
 export default abis;

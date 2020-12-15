@@ -1,18 +1,11 @@
-import React, { useContext, useState, useEffect, useCallback } from "react";
+import React, { useContext } from "react";
 import { Box, Button, Typography } from "@material-ui/core";
 
 import DappContext from "../contexts/Dapp";
 import Ticket from "./Ticket";
 
 export const Intro: React.FC = () => {
-  const { provider, signer, connect } = useContext(DappContext);
-  const [address, setAddress] = useState<string>("");
-
-  const getAddress = useCallback(async () => {
-    if (!signer) return;
-    const _address = await signer.getAddress();
-    setAddress(_address);
-  }, [signer]);
+  const { address, connect } = useContext(DappContext);
 
   const short = (s: string): string =>
     `${s.substr(0, 5)}...${s.substr(s.length - 5, 5)}`;
@@ -20,10 +13,6 @@ export const Intro: React.FC = () => {
   const refreshPage = () => {
     window.location.reload(false);
   };
-
-  useEffect(() => {
-    getAddress();
-  }, [getAddress]);
 
   return (
     <Box
