@@ -12,7 +12,7 @@ function App() {
         display: "flex",
         justifyContent: "space-around",
         flex: 1,
-        paddingTop: "4em",
+        padding: "4em",
       }}
     >
       <Intro />

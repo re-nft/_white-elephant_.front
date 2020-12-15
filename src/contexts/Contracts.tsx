@@ -30,9 +30,8 @@ export const ContractsContextProvider: React.FC = ({ children }) => {
 
   const getContract = useCallback(async () => {
     if (!provider || !signer) return null;
-    const network = (await (
-      await provider.detectNetwork()
-    ).name.toLowerCase()) as "goerli" | "live";
+    const network = await (await provider.detectNetwork()).name.toLowerCase();
+    if (!(network === "goerli" || network === "homestead")) return;
     const _contract = new ethers.Contract(
       addresses[network].whiteElephant,
       abis[network].whiteElephant,

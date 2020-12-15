@@ -4,7 +4,7 @@ const abis = {
   goerli: {
     whiteElephant: whiteElephant.abi,
   },
-  live: {
+  homestead: {
     whiteElephant: whiteElephant.abi,
   },
 };
