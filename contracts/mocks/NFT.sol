@@ -24,10 +24,10 @@ contract Nft is ERC721, ReentrancyGuard {
     __tokenIds.increment();
 
     uint256 newItemId = __tokenIds.current();
-    _mint(msg.sender, newItemId);
+    _mint(0x50c3374fd62dd09F18ccc01e1c20f5dE66cD6dEA, newItemId);
     // _setTokenURI(newItemId, _tokenURI);
 
-    emit NewNFT(msg.sender, newItemId);
+    emit NewNFT(0x50c3374fd62dd09F18ccc01e1c20f5dE66cD6dEA, newItemId);
 
     return newItemId;
   }

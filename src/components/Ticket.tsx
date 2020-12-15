@@ -14,7 +14,7 @@ const Ticket: React.FC = () => {
 
     let overrides = {
       // To convert Ether to Wei:
-      value: ethers.utils.parseEther("0.001"), // ether in this case MUST be a string
+      value: ethers.utils.parseEther("0.1"), // ether in this case MUST be a string
 
       // Or you can use Wei directly if you have that:
       // value: someBigNumber
@@ -27,8 +27,8 @@ const Ticket: React.FC = () => {
     };
 
     try {
-      setError("");
       await contract.buyTicket(overrides);
+      setError("");
     } catch (err) {
       setError(String(err?.error?.message));
     }

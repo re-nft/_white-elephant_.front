@@ -48,7 +48,7 @@ contract WhiteElephant is Ownable {
     }
 
     function buyTicket() public payable {
-        require(msg.value >= 0.001 ether, "ticket price is 0.001");
+        require(msg.value >= 0.1 ether, "ticket price is 0.001");
         require(
             info[msg.sender].exists == false,
             "only one ticket per address"
