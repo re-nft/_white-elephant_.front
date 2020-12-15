@@ -1,9 +1,14 @@
-import React from "react";
-import { Button, Box } from "@material-ui/core";
+import React, { useContext } from "react";
+import { Box, Button } from "@material-ui/core";
 
+import DappContext from "../contexts/Dapp";
 import Ticket from "./Ticket";
 
 export const Intro: React.FC = () => {
+  const { provider, signer, connect } = useContext(DappContext);
+
+  console.debug(signer);
+
   return (
     <Box
       style={{
@@ -13,6 +18,11 @@ export const Intro: React.FC = () => {
         alignItems: "space-around",
       }}
     >
+      <Box>
+        <Button onClick={connect} variant="outlined">
+          Connect Wallet
+        </Button>
+      </Box>
       <Box
         style={{
           border: "2px solid black",
