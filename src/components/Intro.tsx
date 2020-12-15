@@ -1,13 +1,29 @@
-import React, { useContext } from "react";
-import { Box, Button } from "@material-ui/core";
+import React, { useContext, useState, useEffect, useCallback } from "react";
+import { Box, Button, Typography } from "@material-ui/core";
 
 import DappContext from "../contexts/Dapp";
 import Ticket from "./Ticket";
 
 export const Intro: React.FC = () => {
   const { provider, signer, connect } = useContext(DappContext);
+  const [address, setAddress] = useState<string>("");
 
-  console.debug(signer);
+  const getAddress = useCallback(async () => {
+    if (!signer) return;
+    const _address = await signer.getAddress();
+    setAddress(_address);
+  }, [signer]);
+
+  const short = (s: string): string =>
+    `${s.substr(0, 5)}...${s.substr(s.length - 5, 5)}`;
+
+  const refreshPage = () => {
+    window.location.reload(false);
+  };
+
+  useEffect(() => {
+    getAddress();
+  }, [getAddress]);
 
   return (
     <Box
@@ -18,10 +34,20 @@ export const Intro: React.FC = () => {
         alignItems: "space-around",
       }}
     >
-      <Box>
-        <Button onClick={connect} variant="outlined">
-          Connect Wallet
-        </Button>
+      <Box style={{ marginBottom: "1em" }}>
+        {!address && (
+          <Button onClick={connect} variant="outlined">
+            Connect Wallet
+          </Button>
+        )}
+        {address && (
+          <Box style={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography>Welcome, {short(address)}</Typography>
+            <Button variant="outlined" onClick={refreshPage}>
+              Disconnect
+            </Button>
+          </Box>
+        )}
       </Box>
       <Box
         style={{

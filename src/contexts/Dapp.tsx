@@ -23,10 +23,18 @@ export const DappContextProvider: React.FC = ({ children }) => {
 
   const connect = () => {
     //@ts-ignore
-    if (!window?.ethereum) {
-      console.warn("no ethereum in Window. Metamask is not installed?");
+    if (typeof window?.ethereum === "undefined") {
+      console.log("MetaMask is not installed!");
+    }
+
+    try {
+      //@ts-ignore
+      window?.ethereum.enable();
+    } catch (err) {
+      console.error("could not establish connection with MetaMask");
       return;
     }
+
     //@ts-ignore
     const _provider = new ethers.providers.Web3Provider(window?.ethereum);
     setProvider(_provider);
