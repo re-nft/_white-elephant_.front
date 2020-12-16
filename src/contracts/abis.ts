@@ -1,5 +1,5 @@
 import whiteElephant from "./abis/WhiteElephant.json";
-import erc721 from "./abis/ERC721.json";
+import erc721 from "./abis/IERC721.json";
 
 const abis = {
   goerli: {

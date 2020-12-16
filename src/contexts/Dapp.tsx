@@ -1,10 +1,14 @@
 import React, { createContext, useState, useCallback, useEffect } from "react";
 import { ethers } from "ethers";
 
-import { addresses as _addresses } from "../contracts/index";
+import { addresses as _addresses, abis as _abis } from "../contracts/index";
 
 type addresses = {
   whiteElephant: string;
+};
+
+type abis = {
+  whiteElephant: any;
 };
 
 type DappContextType = {
@@ -14,6 +18,7 @@ type DappContextType = {
   address?: string;
   network: string;
   addresses: addresses;
+  abis: abis;
 };
 
 const DefaultDappContext = {
@@ -22,6 +27,9 @@ const DefaultDappContext = {
   },
   network: "",
   addresses: {
+    whiteElephant: "",
+  },
+  abis: {
     whiteElephant: "",
   },
 };
@@ -38,6 +46,9 @@ export const DappContextProvider: React.FC = ({ children }) => {
   const [addresses, setAddresses] = useState<DappContextType["addresses"]>(
     DefaultDappContext.addresses
   );
+  const [abis, setAbis] = useState<DappContextType["abis"]>(
+    DefaultDappContext.abis
+  );
 
   const getAddress = useCallback(async () => {
     if (!signer) return;
@@ -51,11 +62,13 @@ export const DappContextProvider: React.FC = ({ children }) => {
     setNetwork(_network.name.toLowerCase());
   }, [provider]);
 
-  const getAddresses = useCallback(async () => {
+  const getAddressesAndAbis = useCallback(async () => {
     if (!network) return;
     if (!(network === "homestead" || network === "goerli")) return;
     const whiteElephantAddr = _addresses[network].whiteElephant;
+    const whiteElephantAbi = _abis[network].whiteElephant;
     setAddresses({ whiteElephant: whiteElephantAddr });
+    setAbis({ whiteElephant: whiteElephantAbi });
   }, [network]);
 
   const connect = () => {
@@ -81,14 +94,13 @@ export const DappContextProvider: React.FC = ({ children }) => {
   };
 
   useEffect(() => {
-    if (address) return;
     getAddress();
-    getNetwork().then(() => getAddress());
-  }, [address, getAddress, getNetwork, getAddresses]);
+    getNetwork().then(() => getAddressesAndAbis());
+  }, [getAddress, getNetwork, getAddressesAndAbis]);
 
   return (
     <DappContext.Provider
-      value={{ provider, connect, signer, address, addresses, network }}
+      value={{ provider, connect, signer, address, addresses, network, abis }}
     >
       {children}
     </DappContext.Provider>

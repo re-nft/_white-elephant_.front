@@ -19,13 +19,20 @@ const Deposit: React.FC = () => {
       return;
     }
     try {
-      if (!erc721.isApproved(nftAddress, whiteElephantAddr, tokenId)) {
+      const isApproved = await erc721.isApproved(
+        nftAddress,
+        whiteElephantAddr,
+        tokenId
+      );
+
+      if (!isApproved) {
         await erc721.approve(nftAddress, whiteElephantAddr, tokenId);
       }
+
       await contract.depositNft(nftAddress, tokenId);
       setError("");
     } catch (err) {
-      console.error(err);
+      console.debug("could not deposit");
       setError(err?.error?.message);
     }
   }, [whiteElephant, nftAddress, tokenId, addresses, erc721]);
@@ -42,6 +49,18 @@ const Deposit: React.FC = () => {
     setTokenId(e.target?.value || "");
   };
 
+  const approveAll = () => {
+    const { whiteElephant: whiteElephantAddr } = addresses;
+    if (!nftAddress || !whiteElephantAddr) return;
+
+    try {
+      erc721.approve(nftAddress, whiteElephantAddr);
+    } catch (err) {
+      console.error("could not approve all");
+      setError(err?.error?.message);
+    }
+  };
+
   useEffect(() => {
     connect();
   }, []);
@@ -53,11 +72,26 @@ const Deposit: React.FC = () => {
         deemed that we should cut on some work in some places. We really hope
         you excuse us.
       </Typography>
+      <Typography style={{ fontWeight: "bold" }}>Note</Typography>
       <Typography>
+        You will get two MetaMask notifications. One to approve your NFT and the
+        other to actually transfer it to our contract. You will know that it has
+        approved, when you get a notification from your browser, if you have
+        those enabled. Sorry, there are no cues about loading anywhere. We were
+        aiming to deliver this software ASAP.
+        <br />
+        Feel free to approve all the NFTs if you have a bunch of NFTs coming
+        from the same issuer with the approve all button. You will need to write
+        out the NFT address in the text field. You can ignore the token id field
+        when doing so.
+      </Typography>
+      <Typography>------</Typography>
+      <Typography style={{ marginTop: "2em" }}>
         Wise choice, art sensei - the conqueror of creativity
       </Typography>
       <Typography>We have patiently awaited your arrival</Typography>
       <Typography>🍞🧂</Typography>
+
       <Typography style={{ marginTop: "2em" }}>
         Which NFT are you depositing?
       </Typography>
@@ -83,9 +117,18 @@ const Deposit: React.FC = () => {
           </Typography>
         )}
       </Box>
-      <Button onClick={handleDeposit} style={{ marginTop: "1em" }}>
-        Deposit
-      </Button>
+      <Box style={{ marginTop: "2em" }}>
+        <Button
+          onClick={handleDeposit}
+          variant="outlined"
+          style={{ marginRight: "1em" }}
+        >
+          Deposit
+        </Button>
+        <Button onClick={approveAll} variant="outlined">
+          Approve All
+        </Button>
+      </Box>
     </Box>
   );
 };
