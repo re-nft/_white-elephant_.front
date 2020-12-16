@@ -24,7 +24,7 @@ const MainFrame: React.FC = () => {
     if (!contract) return;
     try {
       const tx = await contract.unwrap();
-      const receipt = await tx.wait();
+      console.log("tx", tx);
     } catch (err) {
       console.error("could not unwrap");
       setError(err?.error?.message);

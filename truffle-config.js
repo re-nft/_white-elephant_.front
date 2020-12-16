@@ -72,6 +72,7 @@ module.exports = {
       gas: 5500000,
       confirmations: 1,
       skipDryRun: false,
+      timeoutBlocks: 50000,
     },
     // Useful for private networks
     // private: {
