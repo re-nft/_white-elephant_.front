@@ -8,7 +8,7 @@ contract WhiteElephant is Ownable {
     struct Info {
         address nft;
         uint256 tokenId;
-        uint8 orderNum;
+        uint16 orderNum;
         bool hasTicket;
         bool wasStolenFrom;
         bool exists;
@@ -22,12 +22,13 @@ contract WhiteElephant is Ownable {
     mapping(address => Info) private info;
 
     // todo: this will be chainlink
-    uint8 public orderNum;
+    // 0 signifies no ticket number. i.e. you have not bought the ticket
+    uint16 public orderNum = 1;
 
     // todo: decide on the max total number of players
     address[] public playas;
 
-    uint8 public currentUnwrapper;
+    uint16 public currentUnwrapper;
 
     Nft[] public nfts;
 
@@ -133,6 +134,15 @@ contract WhiteElephant is Ownable {
         player.tokenId = nfts[currNftToUnwrap].tokenId;
         currNftToUnwrap++;
         // ------
+    }
+
+    function myOrderNum() public view returns (uint16) {
+        Info storage player = info[msg.sender];
+        if (player.exists == false) {
+            return 0;
+        } else {
+            return player.orderNum;
+        }
     }
 
     function endEvent() public onlyOwner onChristmas {

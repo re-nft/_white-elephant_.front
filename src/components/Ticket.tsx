@@ -1,4 +1,4 @@
-import React, { useContext, useCallback, useState } from "react";
+import React, { useContext, useCallback, useState, useEffect } from "react";
 import { Box, Button, Typography } from "@material-ui/core";
 import { ethers } from "ethers";
 
@@ -7,6 +7,7 @@ import ContractsContext from "../contexts/Contracts";
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const [error, setError] = useState<string>();
+  const [ticketNum, setTicketNum] = useState<string>("...");
 
   const handleBuy = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -34,6 +35,18 @@ const Ticket: React.FC = () => {
     }
   }, [whiteElephant]);
 
+  const getTicketNum = useCallback(async () => {
+    const { contract } = whiteElephant;
+    if (!contract) return;
+    const orderNum = await contract.myOrderNum();
+    const resolvedTicketNum = orderNum === "0" ? "no ticket" : orderNum;
+    setTicketNum(resolvedTicketNum);
+  }, [whiteElephant]);
+
+  useEffect(() => {
+    getTicketNum();
+  }, [getTicketNum]);
+
   return (
     <Box className="ticket">
       <Box className="ticket__content">
@@ -53,6 +66,9 @@ const Ticket: React.FC = () => {
           )}
         </Box>
         <Box className="ticket__text">TICKET</Box>
+        <Box style={{ margin: "1em" }}>
+          <Typography>Your ticket #: {ticketNum}</Typography>
+        </Box>
       </Box>
     </Box>
   );

@@ -7,7 +7,7 @@
   padding: 20px;
   border-radius: 10px;
   background: #fbfbfb;
-  box-shadow: 2px 2px 15px 0px #ab9b0d;
+  box-shadow: 2px 2px 15px 0px #57564a;
 
   &:before,
   &:after {
@@ -42,17 +42,22 @@
 }
 
 .ticket__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   box-sizing: border-box;
   height: 100%;
   width: 100%;
-  border: 6px solid #d8d8d8;
+  border: 6px solid #5c0101;
 }
 
 .ticket__text {
+  position: absolute;
   width: 400px;
   font-size: 3rem;
   font-weight: 900;
   text-transform: uppercase;
-  color: #c6dede;
-  transform: translate(-25px, 25px) rotate(-55deg);
+  color: #747b00;
+  transform: rotate(-55deg);
+  top: 25%;
 }
