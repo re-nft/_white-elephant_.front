@@ -1,10 +1,12 @@
 const addresses = {
+  hardhat: {
+    whiteElephant: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  },
   goerli: {
-    whiteElephant: "0xcc7DB56d031081D95B74EfC78AA78aF0fAB1b6e5",
+    whiteElephant: "",
   },
   homestead: {
     whiteElephant: "",
   },
 };
-
 export default addresses;

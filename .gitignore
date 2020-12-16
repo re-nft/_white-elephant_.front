@@ -28,3 +28,5 @@ yarn.lock
 bin/contracts
 build
 *.d.ts
+artifacts
+cache
