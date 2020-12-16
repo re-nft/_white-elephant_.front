@@ -28,7 +28,7 @@ contract WhiteElephant is Ownable {
     // todo: decide on the max total number of players
     address[] public playas;
 
-    uint16 public currentUnwrapper;
+    uint16 public currentUnwrapper = 1;
 
     Nft[] public nfts;
 
@@ -113,35 +113,48 @@ contract WhiteElephant is Ownable {
         currentUnwrapper++;
     }
 
-    // * potential issue if this is called at the same time as unwrap by someone else
-    // and both get the same NFT... For cases like that, ensure we have the ability
-    // to send NFTs ourselves too
-    function unwrapAfterStolen() public onChristmas {
-        Info storage player = info[msg.sender];
-        require(player.exists, "you cant play");
-
-        // ensure that the user was stolen from
-        require(player.hasTicket == true, "you must have a ticket");
-        require(player.wasStolenFrom == true, "you must have been stolen from");
-        require(
-            address(player.nft) == address(0),
-            "you have already unwrapped after steal"
-        );
-        require(player.tokenId == 0, "weird error");
-
-        // todo: integrate chainlink for random unwrapping
-        player.nft = address(nfts[currNftToUnwrap].nft);
-        player.tokenId = nfts[currNftToUnwrap].tokenId;
-        currNftToUnwrap++;
-        // ------
-    }
-
     function myOrderNum() public view returns (uint16) {
         Info storage player = info[msg.sender];
         if (player.exists == false) {
             return 0;
         } else {
             return player.orderNum;
+        }
+    }
+
+    function myStolenFrom() public view returns (bool) {
+        Info storage player = info[msg.sender];
+        if (player.exists == false) {
+            return false;
+        } else {
+            return player.wasStolenFrom;
+        }
+    }
+
+    function myNftAddress() public view returns (address) {
+        Info storage player = info[msg.sender];
+        if (player.exists == false) {
+            return address(0);
+        } else {
+            return player.nft;
+        }
+    }
+
+    function myTokenId() public view returns (uint256) {
+        Info storage player = info[msg.sender];
+        if (player.exists == false) {
+            return 0;
+        } else {
+            return player.tokenId;
+        }
+    }
+
+    function myTicket() public view returns (bool) {
+        Info storage player = info[msg.sender];
+        if (player.exists == false) {
+            return false;
+        } else {
+            return player.hasTicket;
         }
     }
 

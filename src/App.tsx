@@ -15,14 +15,20 @@ function App() {
           <Box
             style={{
               display: "flex",
-              justifyContent: "space-around",
+              alignItems: "center",
               flex: 1,
               padding: "4em",
             }}
           >
-            <Intro />
-            <MainFrame />
-            <Steal />
+            <Box style={{ flex: 1 }}>
+              <Intro />
+            </Box>
+            <Box style={{ flex: 1, textAlign: "center" }}>
+              <MainFrame />
+            </Box>
+            <Box style={{ flex: 1, textAlign: "center" }}>
+              <Steal />
+            </Box>
           </Box>
         </Route>
         <Route path="/deposit">
