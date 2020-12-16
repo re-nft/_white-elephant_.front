@@ -1,24 +1,34 @@
-import React, { useContext, useCallback, useState } from "react";
+import React, { useContext, useCallback, useState, useEffect } from "react";
 import { TextField, Box, Typography, Button } from "@material-ui/core";
 
 import ContractsContext from "../contexts/Contracts";
+import DappContext from "../contexts/Dapp";
 
 const Deposit: React.FC = () => {
-  const { whiteElephant } = useContext(ContractsContext);
+  const { connect, addresses } = useContext(DappContext);
+  const { whiteElephant, erc721 } = useContext(ContractsContext);
   const [error, setError] = useState<string>();
   const [nftAddress, setNftAddress] = useState<string>();
   const [tokenId, setTokenId] = useState<string>();
 
   const handleDeposit = useCallback(async () => {
     const { contract } = whiteElephant;
-    if (!contract || !nftAddress || !tokenId) return;
+    const { whiteElephant: whiteElephantAddr } = addresses;
+    if (!contract || !nftAddress || !tokenId || !whiteElephantAddr) {
+      console.debug("no contract, nftAddress, tokenId or whiteElephantAddr");
+      return;
+    }
     try {
-      await contract.deposit(nftAddress, tokenId);
+      if (!erc721.isApproved(nftAddress, whiteElephantAddr, tokenId)) {
+        await erc721.approve(nftAddress, whiteElephantAddr, tokenId);
+      }
+      await contract.depositNft(nftAddress, tokenId);
       setError("");
     } catch (err) {
+      console.error(err);
       setError(err?.error?.message);
     }
-  }, [whiteElephant, nftAddress, tokenId]);
+  }, [whiteElephant, nftAddress, tokenId, addresses, erc721]);
 
   const handleNftAddress = (e: React.ChangeEvent) => {
     e.persist();
@@ -31,6 +41,10 @@ const Deposit: React.FC = () => {
     //@ts-ignore
     setTokenId(e.target?.value || "");
   };
+
+  useEffect(() => {
+    connect();
+  }, []);
 
   return (
     <Box style={{ border: "2px solid black", padding: "2em" }}>
@@ -50,7 +64,11 @@ const Deposit: React.FC = () => {
       {/* todo: add the opensea listed nfts here */}
       <Box style={{ display: "flex", flexDirection: "column" }}>
         <Box>
-          <TextField label="NFT address" onChange={handleNftAddress}>
+          <TextField
+            label="NFT address"
+            onChange={handleNftAddress}
+            style={{ marginRight: "2em" }}
+          >
             {nftAddress}
           </TextField>
           <TextField label="Token ID" onChange={handleTokenId}>
@@ -65,7 +83,9 @@ const Deposit: React.FC = () => {
           </Typography>
         )}
       </Box>
-      <Button onClick={handleDeposit}>Deposit</Button>
+      <Button onClick={handleDeposit} style={{ marginTop: "1em" }}>
+        Deposit
+      </Button>
     </Box>
   );
 };

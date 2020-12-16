@@ -1,4 +1,5 @@
 import whiteElephant from "./abis/WhiteElephant.json";
+import erc721 from "./abis/ERC721.json";
 
 const abis = {
   goerli: {
@@ -7,6 +8,7 @@ const abis = {
   homestead: {
     whiteElephant: whiteElephant.abi,
   },
+  erc721: erc721.abi,
 };
 
 export default abis;
