@@ -4,7 +4,7 @@ import { Box, Button, Typography } from "@material-ui/core";
 import DappContext from "../contexts/Dapp";
 import Ticket from "./Ticket";
 
-export const Intro: React.FC = () => {
+const Intro: React.FC = () => {
   const { address, connect } = useContext(DappContext);
 
   const short = (s: string): string =>
@@ -58,3 +58,5 @@ export const Intro: React.FC = () => {
     </Box>
   );
 };
+
+export default Intro;

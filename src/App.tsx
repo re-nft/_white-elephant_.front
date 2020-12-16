@@ -2,9 +2,10 @@ import React from "react";
 import { Box } from "@material-ui/core";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
-import { Steal } from "./components/Steal";
-import { MainFrame } from "./components/MainFrame";
-import { Intro } from "./components/Intro";
+import Steal from "./components/Steal";
+import MainFrame from "./components/MainFrame";
+import Intro from "./components/Intro";
+import Deposit from "./components/Deposit";
 
 function App() {
   return (
@@ -25,7 +26,9 @@ function App() {
           </Box>
         </Route>
         <Route path="/deposit">
-          <Box>ooh special</Box>
+          <Box style={{ padding: "2em" }}>
+            <Deposit />
+          </Box>
         </Route>
       </Switch>
     </Router>

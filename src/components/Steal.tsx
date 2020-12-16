@@ -3,7 +3,7 @@ import { Button } from "@material-ui/core";
 
 import frame from "../public/img/frame.png";
 
-export const Steal = () => {
+const Steal = () => {
   return (
     <div>
       <ul>
@@ -19,3 +19,5 @@ export const Steal = () => {
     </div>
   );
 };
+
+export default Steal;
