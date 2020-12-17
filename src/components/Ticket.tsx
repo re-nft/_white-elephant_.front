@@ -87,9 +87,9 @@ const Ticket: React.FC = () => {
           </Box>
         </Box>
       </Box>
-      <Alert variant="outlined" severity="success">
+      {/* <Alert variant="outlined" severity="success">
         This is a success alert — check it out!
-      </Alert>
+      </Alert> */}
     </Box>
   );
 };

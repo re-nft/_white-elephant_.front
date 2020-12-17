@@ -4,10 +4,38 @@ import { ethers } from "ethers";
 
 import ContractsContext from "../contexts/Contracts";
 import frame from "../public/img/frame.png";
+import usePoller from "../hooks/Poller";
+
+type Data = {
+  address: string;
+  order: number;
+};
 
 const Table = () => {
+  const { whiteElephant } = useContext(ContractsContext);
+  const [data, setData] = useState<Data[]>([]);
+
+  const handleData = useCallback(async () => {
+    const { contract } = whiteElephant;
+    if (!contract) return;
+
+    const totalNumPlayers = await contract.numberOfPlayers();
+
+    const allPlayers: Data[] = [];
+    for (let i = 0; i < totalNumPlayers; i++) {
+      const player = await contract.getPlayerNumber(i);
+      allPlayers.push({ address: player, order: i + 1 });
+    }
+
+    setData(allPlayers);
+  }, [whiteElephant]);
+
+  usePoller(handleData, 10000);
+
+  if (data.length < 1) return <></>;
+
   return (
-    <table>
+    <table style={{ margin: "auto" }}>
       <thead>
         <tr>
           <th>Address</th>
@@ -15,10 +43,13 @@ const Table = () => {
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>123</td>
-          <td>22</td>
-        </tr>
+        {data &&
+          data.map((d) => (
+            <tr>
+              <td>{d.address}</td>
+              <td>{d.order}</td>
+            </tr>
+          ))}
       </tbody>
     </table>
   );
@@ -42,7 +73,6 @@ const MainFrame: React.FC = () => {
     if (!contract) return;
     try {
       const tx = await contract.unwrap();
-      console.log("tx", tx);
     } catch (err) {
       setError(err.data.message);
     }
@@ -87,7 +117,7 @@ const MainFrame: React.FC = () => {
       </Box>
       <Box style={{ marginTop: "4em", textAlign: "center" }}>
         <Typography variant="h6" style={{ fontWeight: "bold" }}>
-          There shaleth be ordereth
+          There shall-eth be order-eth
         </Typography>
         <Box style={{ margin: "2em" }}>
           <Table />

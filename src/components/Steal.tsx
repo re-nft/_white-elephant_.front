@@ -6,8 +6,8 @@ import frame from "../public/img/frame.png";
 const Steal = () => {
   return (
     <Box>
-      <Typography variant="h3" style={{marginBottom: "2em"}}>
-        Thou shall stealeth?
+      <Typography variant="h3" style={{ marginBottom: "2em" }}>
+        Thou shall-eth steal-eth?
       </Typography>
       <ul>
         <li>
