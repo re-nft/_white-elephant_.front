@@ -3,6 +3,8 @@ import { Box, Button, Typography } from "@material-ui/core";
 import { ethers } from "ethers";
 
 import ContractsContext from "../contexts/Contracts";
+import usePoller from "../hooks/Poller";
+
 
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
@@ -44,15 +46,12 @@ const Ticket: React.FC = () => {
       console.warn("no contract instance");
       return;
     }
-    console.log(contract);
     const orderNum = await contract.myOrderNum();
     const resolvedTicketNum = orderNum === "0" ? "no ticket" : orderNum;
     setTicketNum(resolvedTicketNum);
   }, [whiteElephant]);
 
-  useEffect(() => {
-    getTicketNum();
-  }, [getTicketNum]);
+  usePoller(getTicketNum, 5000);
 
   return (
     <Box className="ticket">

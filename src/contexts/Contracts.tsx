@@ -54,8 +54,6 @@ export const ContractsContextProvider: React.FC = ({ children }) => {
 
   const getContract = useCallback(async () => {
     if (!addresses || !signer || !abis?.whiteElephant) {
-      console.log("addresses", addresses);
-      console.log("abis", abis);
       console.debug("no addresses, signer, or we abi");
       return null;
     }

@@ -1,11 +1,14 @@
 import React from "react";
-import { Button } from "@material-ui/core";
+import { Button, Box, Typography } from "@material-ui/core";
 
 import frame from "../public/img/frame.png";
 
 const Steal = () => {
   return (
-    <div>
+    <Box>
+      <Typography variant="h3" style={{marginBottom: "2em"}}>
+        Thou shall stealeth?
+      </Typography>
       <ul>
         <li>
           <img src={frame} alt="painting frame" />
@@ -18,7 +21,7 @@ const Steal = () => {
           </span>
         </li>
       </ul>
-    </div>
+    </Box>
   );
 };
 
