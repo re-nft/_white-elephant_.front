@@ -1,6 +1,6 @@
 import React, { useContext, useCallback, useState } from "react";
 import { Box, Button, Typography } from "@material-ui/core";
-import { Alert } from "@material-ui/lab";
+// import { Alert } from "@material-ui/lab";
 import { ethers } from "ethers";
 
 import ContractsContext from "../contexts/Contracts";
@@ -10,6 +10,19 @@ const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const [error, setError] = useState<string>();
   const [ticketNum, setTicketNum] = useState<string>("...");
+  // dummy 1 ETH ticket price
+  const [price, setPrice] = useState<ethers.BigNumber>(
+    ethers.BigNumber.from(1)
+  );
+
+  const handlePrice = useCallback(async () => {
+    const { contract } = whiteElephant;
+    if (!contract) return;
+
+    const _price = await contract.ticketPrice();
+
+    setPrice(_price);
+  }, [whiteElephant]);
 
   const handleBuy = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -17,11 +30,6 @@ const Ticket: React.FC = () => {
       console.debug("no contract instance");
       return;
     }
-
-    // todo: pull the ticket price from the contract here and use that instead
-    const price = await contract.ticketPrice();
-
-    console.log("the price is", price);
 
     let overrides = {
       // To convert Ether to Wei:
@@ -43,7 +51,7 @@ const Ticket: React.FC = () => {
     } catch (err) {
       setError(String(err.data.message));
     }
-  }, [whiteElephant]);
+  }, [whiteElephant, price]);
 
   const getTicketNum = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -56,6 +64,7 @@ const Ticket: React.FC = () => {
     setTicketNum(resolvedTicketNum);
   }, [whiteElephant]);
 
+  usePoller(handlePrice, 5000);
   usePoller(getTicketNum, 5000);
 
   return (
@@ -65,20 +74,24 @@ const Ticket: React.FC = () => {
           <Box
             style={{ textAlign: "center", margin: "0.5em", paddingTop: "2em" }}
           >
-            <h1 style={{ paddingBottom: "0.5em" }}>1 ETH</h1>
-            <Button variant="outlined" onClick={handleBuy}>
-              Buy
-            </Button>
-            {error && (
-              <Typography
-                style={{
-                  color: "red",
-                  fontWeight: "bold",
-                  paddingTop: "0.5em",
-                }}
-              >
-                {error}
-              </Typography>
+            {(ticketNum === "0" || ticketNum === "...") && (
+              <Box>
+                <h1 style={{ paddingBottom: "0.5em" }}>{Number(price)} ETH</h1>
+                <Button variant="outlined" onClick={handleBuy}>
+                  Buy
+                </Button>
+                {error && (
+                  <Typography
+                    style={{
+                      color: "red",
+                      fontWeight: "bold",
+                      paddingTop: "0.5em",
+                    }}
+                  >
+                    {error}
+                  </Typography>
+                )}
+              </Box>
             )}
           </Box>
           <Box className="ticket__text">TICKET</Box>

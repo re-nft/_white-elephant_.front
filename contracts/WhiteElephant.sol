@@ -31,7 +31,7 @@ contract WhiteElephant is Ownable {
     Nft[] public allNfts;
 
     modifier yourOrder(address _sender) {
-        require(info[_sender].orderNum == currNftToUnwrap, "not your order");
+        require(info[_sender].orderNum == currNftToUnwrap, "not your turn");
         _;
     }
 

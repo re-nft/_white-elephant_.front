@@ -11,9 +11,16 @@ type Data = {
   order: number;
 };
 
+type Prize = {
+  nft: string;
+  tokenId: number;
+  iWasStolenFrom: number;
+};
+
 const Table = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const [data, setData] = useState<Data[]>([]);
+  const [currTurn, setCurrTurn] = useState<number>(-1);
 
   const handleData = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -30,7 +37,23 @@ const Table = () => {
     setData(allPlayers);
   }, [whiteElephant]);
 
+  const handleTurn = useCallback(async () => {
+    const { contract } = whiteElephant;
+    if (!contract) return;
+
+    const __currTurn = await contract.currNftToUnwrap();
+    let _currTurn = -1;
+    try {
+      _currTurn = Number(__currTurn);
+    } catch (err) {
+      console.warn("could not get my order number");
+    }
+
+    setCurrTurn(_currTurn);
+  }, [whiteElephant]);
+
   usePoller(handleData, 10000);
+  usePoller(handleTurn, 10000);
 
   if (data.length < 1) return <></>;
 
@@ -45,7 +68,7 @@ const Table = () => {
       <tbody>
         {data &&
           data.map((d) => (
-            <tr>
+            <tr style={{ background: currTurn === d.order ? "green" : "" }}>
               <td>{d.address}</td>
               <td>{d.order}</td>
             </tr>
@@ -59,6 +82,7 @@ const MainFrame: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const [stolen, setStolen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [myPrize, setMyPrize] = useState<Prize>();
 
   const wasStolenFrom = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -78,6 +102,28 @@ const MainFrame: React.FC = () => {
     }
   }, [whiteElephant]);
 
+  const handlePrize = useCallback(async () => {
+    const { contract } = whiteElephant;
+    if (!contract) return;
+
+    const nftAddress = await contract.myNftAddress();
+    if (!nftAddress) return;
+    let tokenId = Number(await contract.myTokenId());
+    let iWasStolenFrom = await contract.myStolenFrom();
+
+    const _prize = {
+      nft: nftAddress,
+      tokenId,
+      iWasStolenFrom,
+    };
+
+    console.log(_prize);
+
+    setMyPrize(_prize);
+  }, [whiteElephant]);
+
+  usePoller(handlePrize, 20000);
+
   useEffect(() => {
     wasStolenFrom();
   }, [wasStolenFrom]);
@@ -90,6 +136,19 @@ const MainFrame: React.FC = () => {
       <Box>
         <img src={frame} alt="painting frame" />
       </Box>
+      {myPrize && (
+        <Box style={{ marginTop: "2em" }}>
+          <Typography>NFT Address: {myPrize.nft}</Typography>
+          <Typography>
+            Token id:{" "}
+            <a
+              href={`https://etherscan.io/token/${myPrize.nft}?a=${myPrize.tokenId}`}
+            >
+              {myPrize.tokenId}
+            </a>
+          </Typography>
+        </Box>
+      )}
       <Box style={{ marginTop: "2em" }}>
         {error && (
           <Typography style={{ fontWeight: "bold", color: "red" }}>
@@ -97,7 +156,7 @@ const MainFrame: React.FC = () => {
           </Typography>
         )}
         <Box style={{ marginTop: "2em" }}>
-          {!stolen && (
+          {!stolen && !myPrize && (
             <Button variant="outlined" onClick={unwrap}>
               Unwrap
             </Button>
