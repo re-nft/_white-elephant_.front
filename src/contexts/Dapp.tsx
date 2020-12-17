@@ -57,24 +57,54 @@ export const DappContextProvider: React.FC = ({ children }) => {
   }, [signer]);
 
   const getNetwork = useCallback(async () => {
-    if (!provider) return;
+    if (!provider) {
+      console.warn("can't identify the provider");
+      return;
+    }
     const _network = await provider.detectNetwork();
-    setNetwork(_network.name.toLowerCase());
+    let __network = _network.name.toLowerCase();
+    if (
+      !(
+        __network === "homestead" ||
+        __network === "goerli" ||
+        __network === "unknown" ||
+        __network === "hardhat"
+      )
+    ) {
+      console.warn("invalid network.", __network);
+    }
+    __network = __network === "unknown" ? "hardhat" : "oops";
+    setNetwork(__network);
   }, [provider]);
 
   const getAddressesAndAbis = useCallback(async () => {
-    if (!network) return;
-    if (!(network === "homestead" || network === "goerli")) return;
+    if (!network) {
+      console.warn("can't identify the network");
+      return;
+    }
+    // * unknown network can be hardhat in local dev env
+    if (
+      !(
+        network === "homestead" ||
+        network === "goerli" ||
+        network === "hardhat"
+      )
+    ) {
+      console.warn("invalid network", network);
+      return;
+    }
+
     const whiteElephantAddr = _addresses[network].whiteElephant;
     const whiteElephantAbi = _abis[network].whiteElephant;
     setAddresses({ whiteElephant: whiteElephantAddr });
     setAbis({ whiteElephant: whiteElephantAbi });
   }, [network]);
 
-  const connect = () => {
+  const connect = useCallback(() => {
     //@ts-ignore
     if (typeof window?.ethereum === "undefined") {
-      console.log("MetaMask is not installed!");
+      console.warn("MetaMask is not installed!");
+      return;
     }
 
     try {
@@ -87,15 +117,17 @@ export const DappContextProvider: React.FC = ({ children }) => {
 
     //@ts-ignore
     const _provider = new ethers.providers.Web3Provider(window?.ethereum);
+
     setProvider(_provider);
 
     const _signer = _provider.getSigner();
     setSigner(_signer);
-  };
+  }, []);
 
   useEffect(() => {
     getAddress();
-    getNetwork().then(() => getAddressesAndAbis());
+    getNetwork();
+    getAddressesAndAbis();
   }, [getAddress, getNetwork, getAddressesAndAbis]);
 
   return (

@@ -11,7 +11,10 @@ const Ticket: React.FC = () => {
 
   const handleBuy = useCallback(async () => {
     const { contract } = whiteElephant;
-    if (!contract) return;
+    if (!contract) {
+      console.debug("no contract instance");
+      return;
+    }
 
     let overrides = {
       // To convert Ether to Wei:
@@ -37,7 +40,11 @@ const Ticket: React.FC = () => {
 
   const getTicketNum = useCallback(async () => {
     const { contract } = whiteElephant;
-    if (!contract) return;
+    if (!contract) {
+      console.warn("no contract instance");
+      return;
+    }
+    console.log(contract);
     const orderNum = await contract.myOrderNum();
     const resolvedTicketNum = orderNum === "0" ? "no ticket" : orderNum;
     setTicketNum(resolvedTicketNum);

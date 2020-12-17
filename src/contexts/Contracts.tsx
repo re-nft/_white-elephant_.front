@@ -53,7 +53,12 @@ export const ContractsContextProvider: React.FC = ({ children }) => {
   const [elephantContract, setElephantContract] = useState<ethers.Contract>();
 
   const getContract = useCallback(async () => {
-    if (!addresses || !signer || !abis?.whiteElephant) return null;
+    if (!addresses || !signer || !abis?.whiteElephant) {
+      console.log("addresses", addresses);
+      console.log("abis", abis);
+      console.debug("no addresses, signer, or we abi");
+      return null;
+    }
 
     const _contract = new ethers.Contract(
       addresses.whiteElephant,

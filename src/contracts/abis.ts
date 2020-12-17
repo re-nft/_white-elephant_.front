@@ -2,6 +2,9 @@ import whiteElephant from "./abis/WhiteElephant.json";
 import erc721 from "./abis/IERC721.json";
 
 const abis = {
+  hardhat: {
+    whiteElephant: whiteElephant.abi,
+  },
   goerli: {
     whiteElephant: whiteElephant.abi,
   },
