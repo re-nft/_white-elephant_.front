@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.5;
+pragma solidity ^0.7.6;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -24,32 +24,25 @@ contract WhiteElephant is Ownable {
     // todo: this will be chainlink
     // 0 signifies no ticket number. i.e. you have not bought the ticket
     uint16 public orderNum = 1;
+    uint16 public currNftToUnwrap = 1;
+    uint256 public ticketPrice = 0.1 ether;
 
-    // todo: decide on the max total number of players
-    address[] public playas;
-
-    uint16 public currentUnwrapper = 1;
-
-    Nft[] public nfts;
-
-    // * for chainlink integration
-    uint256[] private unavailableNfts;
-
-    uint256 public currNftToUnwrap;
+    address[] public players;
+    Nft[] public allNfts;
 
     modifier yourOrder(address _sender) {
-        require(info[_sender].orderNum == currentUnwrapper, "not your order");
+        require(info[_sender].orderNum == currNftToUnwrap, "not your order");
         _;
     }
 
     modifier onChristmas() {
-        // todo: uncomment
-        // require(block.timestamp >= 1232321, "wait for Christmas");
+        // todo: find the Christmas block number;
+        require(block.number >= 1, "wait for Christmas");
         _;
     }
 
     function buyTicket() public payable {
-        require(msg.value >= 0.1 ether, "ticket price is 0.001");
+        require(msg.value >= ticketPrice, "you are sending incorrect amount");
         require(
             info[msg.sender].exists == false,
             "only one ticket per address"
@@ -57,20 +50,16 @@ contract WhiteElephant is Ownable {
 
         info[msg.sender].hasTicket = true;
         info[msg.sender].exists = true;
-        // give them a chainlink VRF here for the order in which they will go
-
-        // todo: refactor for chainlink
         info[msg.sender].orderNum = orderNum;
+
         orderNum++;
 
-        playas.push(msg.sender);
+        players.push(msg.sender);
     }
 
     function depositNft(ERC721 _nft, uint256 _tokenId) public {
-        // will fail if not approved
         _nft.transferFrom(msg.sender, address(this), _tokenId);
-        // todo: idea about deposits in the future. fees
-        nfts.push(Nft(_nft, _tokenId));
+        allNfts.push(Nft(_nft, _tokenId));
     }
 
     function stealNft(uint256 _stealFrom, address _theirAddress)
@@ -78,9 +67,6 @@ contract WhiteElephant is Ownable {
         yourOrder(msg.sender)
         onChristmas
     {
-        // 1. user must not have the nft
-        // 2. can only steal from the people before them
-        // 3. ensure it is their order
         Info storage player = info[msg.sender];
 
         require(player.orderNum > _stealFrom, "cant steal from them");
@@ -97,21 +83,16 @@ contract WhiteElephant is Ownable {
         info[_theirAddress].tokenId = 0;
     }
 
-    // on Christmas Eve, this gets unlocked
     function unwrap() public yourOrder(msg.sender) onChristmas {
         Info storage player = info[msg.sender];
-        // todo: require christmas
-        // ensure the order is respected
 
-        // todo: integrate chainlink. right now linear unwrapping
-        player.nft = address(nfts[currNftToUnwrap].nft);
-        player.tokenId = nfts[currNftToUnwrap].tokenId;
+        player.nft = address(allNfts[currNftToUnwrap].nft);
+        player.tokenId = allNfts[currNftToUnwrap].tokenId;
+
         currNftToUnwrap++;
-        // ----
-
-        // increment the unwrapper
-        currentUnwrapper++;
     }
+
+    // info related --=
 
     function myOrderNum() public view returns (uint16) {
         Info storage player = info[msg.sender];
@@ -158,15 +139,29 @@ contract WhiteElephant is Ownable {
         }
     }
 
-    function endEvent() public onlyOwner onChristmas {
-        // todo: require christmas
-        for (uint256 i = 0; i < playas.length; i++) {
-            Info storage player = info[playas[i]];
+    // ---
+
+    function numberOfPlayers() public view returns (uint256) {
+        return players.length;
+    }
+
+    function getPlayerNumber(uint256 _number) public view returns (address) {
+        return players[_number];
+    }
+
+    function endEvent() public onChristmas {
+        for (uint256 i = 0; i < players.length; i++) {
+            Info storage player = info[players[i]];
             ERC721(player.nft).transferFrom(
                 address(this),
-                playas[i],
+                players[i],
                 player.tokenId
             );
         }
+    }
+
+    // admin related
+    function setTicketPrice(uint256 _value) public onlyOwner {
+        ticketPrice = _value;
     }
 }

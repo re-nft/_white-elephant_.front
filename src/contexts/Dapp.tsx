@@ -63,17 +63,7 @@ export const DappContextProvider: React.FC = ({ children }) => {
     }
     const _network = await provider.detectNetwork();
     let __network = _network.name.toLowerCase();
-    if (
-      !(
-        __network === "homestead" ||
-        __network === "goerli" ||
-        __network === "unknown" ||
-        __network === "hardhat"
-      )
-    ) {
-      console.warn("invalid network.", __network);
-    }
-    __network = __network === "unknown" ? "hardhat" : "oops";
+    __network = __network === "unknown" ? "localhost" : __network;
     setNetwork(__network);
   }, [provider]);
 
@@ -82,18 +72,7 @@ export const DappContextProvider: React.FC = ({ children }) => {
       console.warn("can't identify the network");
       return;
     }
-    // * unknown network can be hardhat in local dev env
-    if (
-      !(
-        network === "homestead" ||
-        network === "goerli" ||
-        network === "hardhat"
-      )
-    ) {
-      console.warn("invalid network", network);
-      return;
-    }
-
+    console.log("network", network);
     const whiteElephantAddr = _addresses[network].whiteElephant;
     const whiteElephantAbi = _abis[network].whiteElephant;
     setAddresses({ whiteElephant: whiteElephantAddr });

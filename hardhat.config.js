@@ -1,11 +1,19 @@
 require("@nomiclabs/hardhat-waffle");
 const fs = require("fs");
-const { config, ethers, task } = require("hardhat/config");
+// const { config, ethers, task } = require("hardhat");
 
 const defaultNetwork = "localhost";
 const WRITE_PATH = "./src/contracts/addresses.ts";
-const addressesTemplate = ({ hardhat = "", goerli = "", homestead = "" }) => {
+const addressesTemplate = ({
+  localhost = "",
+  hardhat = "",
+  goerli = "",
+  homestead = "",
+}) => {
   return `const addresses = {
+  localhost: {
+    whiteElephant: "${localhost}",
+  },
   hardhat: {
     whiteElephant: "${hardhat}",
   },
@@ -97,7 +105,7 @@ module.exports = {
     },
   },
   solidity: {
-    version: "0.7.5",
+    version: "0.7.6",
     settings: {
       optimizer: {
         enabled: true,

@@ -1,10 +1,10 @@
-import React, { useContext, useCallback, useState, useEffect } from "react";
+import React, { useContext, useCallback, useState } from "react";
 import { Box, Button, Typography } from "@material-ui/core";
+import { Alert } from "@material-ui/lab";
 import { ethers } from "ethers";
 
 import ContractsContext from "../contexts/Contracts";
 import usePoller from "../hooks/Poller";
-
 
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
@@ -18,9 +18,12 @@ const Ticket: React.FC = () => {
       return;
     }
 
+    // todo: pull the ticket price from the contract here and use that instead
+    const price = await contract.ticketPrice();
+
     let overrides = {
       // To convert Ether to Wei:
-      value: ethers.utils.parseEther("0.1"), // ether in this case MUST be a string
+      value: price, // ether in this case MUST be a string
 
       // Or you can use Wei directly if you have that:
       // value: someBigNumber
@@ -36,7 +39,7 @@ const Ticket: React.FC = () => {
       await contract.buyTicket(overrides);
       setError("");
     } catch (err) {
-      setError(String(err?.error?.message));
+      setError(String(err.data.message));
     }
   }, [whiteElephant]);
 
@@ -54,28 +57,37 @@ const Ticket: React.FC = () => {
   usePoller(getTicketNum, 5000);
 
   return (
-    <Box className="ticket">
-      <Box className="ticket__content">
-        <Box
-          style={{ textAlign: "center", margin: "0.5em", paddingTop: "2em" }}
-        >
-          <h1 style={{ paddingBottom: "0.5em" }}>1 ETH</h1>
-          <Button variant="outlined" onClick={handleBuy}>
-            Buy
-          </Button>
-          {error && (
-            <Typography
-              style={{ color: "red", fontWeight: "bold", paddingTop: "0.5em" }}
-            >
-              {error}
-            </Typography>
-          )}
-        </Box>
-        <Box className="ticket__text">TICKET</Box>
-        <Box style={{ margin: "1em" }}>
-          <Typography>Your ticket #: {ticketNum}</Typography>
+    <Box>
+      <Box className="ticket">
+        <Box className="ticket__content">
+          <Box
+            style={{ textAlign: "center", margin: "0.5em", paddingTop: "2em" }}
+          >
+            <h1 style={{ paddingBottom: "0.5em" }}>1 ETH</h1>
+            <Button variant="outlined" onClick={handleBuy}>
+              Buy
+            </Button>
+            {error && (
+              <Typography
+                style={{
+                  color: "red",
+                  fontWeight: "bold",
+                  paddingTop: "0.5em",
+                }}
+              >
+                {error}
+              </Typography>
+            )}
+          </Box>
+          <Box className="ticket__text">TICKET</Box>
+          <Box style={{ margin: "1em" }}>
+            <Typography>Your ticket #: {ticketNum}</Typography>
+          </Box>
         </Box>
       </Box>
+      <Alert variant="outlined" severity="success">
+        This is a success alert — check it out!
+      </Alert>
     </Box>
   );
 };

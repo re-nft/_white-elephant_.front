@@ -1,8 +1,28 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Box, Button, Typography } from "@material-ui/core";
+import { ethers } from "ethers";
 
 import ContractsContext from "../contexts/Contracts";
 import frame from "../public/img/frame.png";
+
+const Table = () => {
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Address</th>
+          <th>Turn</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>123</td>
+          <td>22</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+};
 
 const MainFrame: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
@@ -14,9 +34,7 @@ const MainFrame: React.FC = () => {
     if (!contract) return;
     const _wasStolenFrom = await contract.myStolenFrom();
     const _nft = await contract.myNftAddress();
-    setStolen(
-      _nft === "0x0000000000000000000000000000000000000000" && _wasStolenFrom
-    );
+    setStolen(_nft === ethers.constants.AddressZero && _wasStolenFrom);
   }, [whiteElephant]);
 
   const unwrap = useCallback(async () => {
@@ -26,8 +44,7 @@ const MainFrame: React.FC = () => {
       const tx = await contract.unwrap();
       console.log("tx", tx);
     } catch (err) {
-      console.error("could not unwrap");
-      setError(err?.error?.message);
+      setError(err.data.message);
     }
   }, [whiteElephant]);
 
@@ -44,22 +61,37 @@ const MainFrame: React.FC = () => {
         <img src={frame} alt="painting frame" />
       </Box>
       <Box style={{ marginTop: "2em" }}>
-        {!stolen && (
-          <Button variant="outlined" onClick={unwrap}>
-            Unwrap
-          </Button>
+        {error && (
+          <Typography style={{ fontWeight: "bold", color: "red" }}>
+            {error}
+          </Typography>
         )}
-        {stolen && (
-          <Box>
-            <Typography>Oh oh, someone naughty stole from you</Typography>
-            <Typography>Go ahead, unwrap or steal</Typography>
-            <Typography>Now, noone will be able to steal from you</Typography>
-
+        <Box style={{ marginTop: "2em" }}>
+          {!stolen && (
             <Button variant="outlined" onClick={unwrap}>
-              Unwrap again...
+              Unwrap
             </Button>
-          </Box>
-        )}
+          )}
+          {stolen && (
+            <Box>
+              <Typography>Oh oh, someone naughty stole from you</Typography>
+              <Typography>Go ahead, unwrap or steal</Typography>
+              <Typography>Now, noone will be able to steal from you</Typography>
+
+              <Button variant="outlined" onClick={unwrap}>
+                Unwrap again...
+              </Button>
+            </Box>
+          )}
+        </Box>
+      </Box>
+      <Box style={{ marginTop: "4em", textAlign: "center" }}>
+        <Typography variant="h6" style={{ fontWeight: "bold" }}>
+          There shaleth be ordereth
+        </Typography>
+        <Box style={{ margin: "2em" }}>
+          <Table />
+        </Box>
       </Box>
     </Box>
   );

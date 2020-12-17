@@ -1,11 +1,12 @@
 import React from "react";
-import { Box, Typography } from "@material-ui/core";
+import { Box } from "@material-ui/core";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
 import Steal from "./components/Steal";
 import MainFrame from "./components/MainFrame";
 import Intro from "./components/Intro";
 import Deposit from "./components/Deposit";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -47,15 +48,16 @@ function App() {
                 flex: 1,
                 textAlign: "center",
                 borderRight: "2px solid black",
-                paddingRight: "1em",
+                padding: "0 1em",
               }}
             >
               <MainFrame />
             </Box>
-            <Box style={{ flex: 1, textAlign: "center" }}>
+            <Box style={{ flex: 1, textAlign: "center", padding: "0 1em" }}>
               <Steal />
             </Box>
           </Box>
+          <Footer />
         </Route>
         <Route path="/deposit">
           <Box style={{ padding: "2em" }}>
