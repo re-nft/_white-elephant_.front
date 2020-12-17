@@ -31,7 +31,10 @@ const Intro: React.FC = () => {
         )}
         {address && (
           <Box style={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography>Welcome, {short(address)}</Typography>
+            <Typography>
+              <span style={{ fontWeight: "bold" }}>Welcome</span>,{" "}
+              {short(address)}
+            </Typography>
             <Button variant="outlined" onClick={refreshPage}>
               Disconnect
             </Button>

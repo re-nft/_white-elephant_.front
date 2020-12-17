@@ -37,10 +37,13 @@ const MainFrame: React.FC = () => {
 
   return (
     <Box>
+      <Box style={{ marginBottom: "4em" }}>
+        <Typography variant="h2">Thy Prize</Typography>
+      </Box>
       <Box>
         <img src={frame} alt="painting frame" />
       </Box>
-      <Box>
+      <Box style={{ marginTop: "2em" }}>
         {!stolen && (
           <Button variant="outlined" onClick={unwrap}>
             Unwrap

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box } from "@material-ui/core";
+import { Box, Typography } from "@material-ui/core";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
 import Steal from "./components/Steal";
@@ -12,6 +12,19 @@ function App() {
     <Router>
       <Switch>
         <Route exact path="/">
+          <Box>
+            <Box style={{ marginLeft: "1em" }}>
+              powered by brainz @{" "}
+              <Box className="Header__title" data-text="reNFT">
+                <a href="https://twitter.com/renftlabs" data-text="reNFT">
+                  reNFT
+                </a>
+              </Box>
+            </Box>
+          </Box>
+          {/* <Box style={{ textAlign: "center" }}>
+            <Typography variant="h4">White Elephant ho ho ho</Typography>
+          </Box> */}
           <Box
             style={{
               display: "flex",
@@ -20,10 +33,23 @@ function App() {
               padding: "4em",
             }}
           >
-            <Box style={{ flex: 1 }}>
+            <Box
+              style={{
+                flex: 1,
+                borderRight: "2px solid black",
+                paddingRight: "1em",
+              }}
+            >
               <Intro />
             </Box>
-            <Box style={{ flex: 1, textAlign: "center" }}>
+            <Box
+              style={{
+                flex: 1,
+                textAlign: "center",
+                borderRight: "2px solid black",
+                paddingRight: "1em",
+              }}
+            >
               <MainFrame />
             </Box>
             <Box style={{ flex: 1, textAlign: "center" }}>

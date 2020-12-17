@@ -12,7 +12,9 @@ const Steal = () => {
           <span>
             <p>Address:</p>
             <p>Token Id:</p>
-            <Button variant="outlined">Steal</Button>{" "}
+            <Button variant="outlined" style={{ marginTop: "2em" }}>
+              Steal
+            </Button>{" "}
           </span>
         </li>
       </ul>
