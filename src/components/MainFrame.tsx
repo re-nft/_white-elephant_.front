@@ -68,7 +68,10 @@ const Table = () => {
       <tbody>
         {data &&
           data.map((d) => (
-            <tr style={{ background: currTurn === d.order ? "green" : "" }}>
+            <tr
+              key={`${d.address}::${d.order}`}
+              style={{ background: currTurn === d.order ? "green" : "" }}
+            >
               <td>{d.address}</td>
               <td>{d.order}</td>
             </tr>
@@ -96,7 +99,7 @@ const MainFrame: React.FC = () => {
     const { contract } = whiteElephant;
     if (!contract) return;
     try {
-      const tx = await contract.unwrap();
+      await contract.unwrap();
     } catch (err) {
       setError(err.data.message);
     }
@@ -107,7 +110,7 @@ const MainFrame: React.FC = () => {
     if (!contract) return;
 
     const nftAddress = await contract.myNftAddress();
-    if (!nftAddress) return;
+    if (!nftAddress || ethers.constants.AddressZero === nftAddress) return;
     let tokenId = Number(await contract.myTokenId());
     let iWasStolenFrom = await contract.myStolenFrom();
 
@@ -116,8 +119,6 @@ const MainFrame: React.FC = () => {
       tokenId,
       iWasStolenFrom,
     };
-
-    console.log(_prize);
 
     setMyPrize(_prize);
   }, [whiteElephant]);

@@ -63,7 +63,7 @@ const Deposit: React.FC = () => {
 
   useEffect(() => {
     connect();
-  }, []);
+  }, [connect]);
 
   return (
     <Box style={{ border: "2px solid black", padding: "2em" }}>

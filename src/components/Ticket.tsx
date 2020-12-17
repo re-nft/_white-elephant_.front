@@ -9,19 +9,18 @@ import usePoller from "../hooks/Poller";
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const [error, setError] = useState<string>();
-  const [ticketNum, setTicketNum] = useState<string>("...");
+  const [ticketNum, setTicketNum] = useState<string>("-1");
   // dummy 1 ETH ticket price
-  const [price, setPrice] = useState<ethers.BigNumber>(
-    ethers.BigNumber.from(1)
-  );
+  const [price, setPrice] = useState<string>("1");
 
   const handlePrice = useCallback(async () => {
     const { contract } = whiteElephant;
     if (!contract) return;
 
     const _price = await contract.ticketPrice();
+    const __price = ethers.utils.formatEther(_price);
 
-    setPrice(_price);
+    setPrice(__price);
   }, [whiteElephant]);
 
   const handleBuy = useCallback(async () => {
@@ -31,9 +30,11 @@ const Ticket: React.FC = () => {
       return;
     }
 
+    const valueToSend = ethers.utils.parseEther(price);
+
     let overrides = {
       // To convert Ether to Wei:
-      value: price, // ether in this case MUST be a string
+      value: valueToSend, // ether in this case MUST be a string
 
       // Or you can use Wei directly if you have that:
       // value: someBigNumber
@@ -49,7 +50,7 @@ const Ticket: React.FC = () => {
       await contract.buyTicket(overrides);
       setError("");
     } catch (err) {
-      setError(String(err.data.message));
+      setError(String(err?.data?.message));
     }
   }, [whiteElephant, price]);
 
@@ -60,10 +61,11 @@ const Ticket: React.FC = () => {
       return;
     }
     const orderNum = await contract.myOrderNum();
-    const resolvedTicketNum = orderNum === "0" ? "no ticket" : orderNum;
+    const resolvedTicketNum = orderNum === 0 ? "-1" : orderNum;
     setTicketNum(resolvedTicketNum);
   }, [whiteElephant]);
 
+  // todo: ethers.utils has a poll function!
   usePoller(handlePrice, 5000);
   usePoller(getTicketNum, 5000);
 
@@ -74,7 +76,7 @@ const Ticket: React.FC = () => {
           <Box
             style={{ textAlign: "center", margin: "0.5em", paddingTop: "2em" }}
           >
-            {(ticketNum === "0" || ticketNum === "...") && (
+            {ticketNum === "-1" && (
               <Box>
                 <h1 style={{ paddingBottom: "0.5em" }}>{Number(price)} ETH</h1>
                 <Button variant="outlined" onClick={handleBuy}>

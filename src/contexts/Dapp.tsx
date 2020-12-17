@@ -72,7 +72,6 @@ export const DappContextProvider: React.FC = ({ children }) => {
       console.warn("can't identify the network");
       return;
     }
-    console.log("network", network);
     const whiteElephantAddr = _addresses[network].whiteElephant;
     const whiteElephantAbi = _abis.whiteElephant;
     setAddresses({ whiteElephant: whiteElephantAddr });

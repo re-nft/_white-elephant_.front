@@ -139,6 +139,27 @@ contract WhiteElephant is Ownable {
         }
     }
 
+    function getPlayerInfo(address _player)
+        public
+        view
+        returns (
+            address nft,
+            uint256 tokenId,
+            uint16 orderNumber,
+            bool hasTicket,
+            bool wasStolenFrom,
+            bool exists
+        )
+    {
+        Info storage player = info[_player];
+        nft = player.nft;
+        tokenId = player.tokenId;
+        orderNumber = player.orderNum;
+        hasTicket = player.hasTicket;
+        wasStolenFrom = player.wasStolenFrom;
+        exists = player.exists;
+    }
+
     // ---
 
     function numberOfPlayers() public view returns (uint256) {
