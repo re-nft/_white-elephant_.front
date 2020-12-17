@@ -1,5 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 const fs = require("fs");
+// const { task, ethers } = require("hardhat/config");
 // const { config, ethers, task } = require("hardhat");
 
 const defaultNetwork = "localhost";
@@ -52,6 +53,14 @@ task(
     fs.writeFileSync(WRITE_PATH, addresses);
   }
 );
+
+task("write-abis", "Writes the abis", async (taskArgs, hre, runSuper) => {
+  const data = fs.readFileSync(
+    "./artifacts/contracts/WhiteElephant.sol/WhiteElephant.json"
+  );
+  fs.writeFileSync("./src/contracts/abis/WhiteElephant.json", data);
+  console.log("Wrote WhiteElephant.json artifact");
+});
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

@@ -21,6 +21,8 @@ const Ticket: React.FC = () => {
     // todo: pull the ticket price from the contract here and use that instead
     const price = await contract.ticketPrice();
 
+    console.log("the price is", price);
+
     let overrides = {
       // To convert Ether to Wei:
       value: price, // ether in this case MUST be a string

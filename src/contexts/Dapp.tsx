@@ -74,7 +74,7 @@ export const DappContextProvider: React.FC = ({ children }) => {
     }
     console.log("network", network);
     const whiteElephantAddr = _addresses[network].whiteElephant;
-    const whiteElephantAbi = _abis[network].whiteElephant;
+    const whiteElephantAbi = _abis.whiteElephant;
     setAddresses({ whiteElephant: whiteElephantAddr });
     setAbis({ whiteElephant: whiteElephantAbi });
   }, [network]);

@@ -92,7 +92,6 @@ export const ContractsContextProvider: React.FC = ({ children }) => {
         tx = await contract.setApprovalForAll(operator, true);
       }
 
-      // receipt
       await tx.wait();
     },
     [getContractErc721]
