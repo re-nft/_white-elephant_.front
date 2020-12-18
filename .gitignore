@@ -30,3 +30,4 @@ build
 *.d.ts
 artifacts
 cache
+all.addresses

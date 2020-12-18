@@ -6,7 +6,7 @@ const addresses = {
     whiteElephant: "",
   },
   goerli: {
-    whiteElephant: "0x7ba4e57b790543F976FE6dC940ED3B2c9Ff36f7f",
+    whiteElephant: "0xe79Af1652a549C4B4130d446f1e5fE9485B21Ec5",
   },
   homestead: {
     whiteElephant: "",

@@ -78,6 +78,14 @@ async function main() {
   console.log("Nft deployed to:", nft.address);
   console.log("WhiteElephant deployed to:", whiteElephant.address);
 
+  // for convenience purely
+  const allAddresses = JSON.stringify({
+    whiteElephant: whiteElephant.address,
+    nft: nft.address,
+  });
+  fs.writeFileSync("./all.addresses", allAddresses);
+  // ----
+
   console.log("Writing the addresses of the deployed contracts...");
   const data = addressesTemplate({ [network.name]: whiteElephant.address });
   fs.writeFileSync(WRITE_PATH, data);
