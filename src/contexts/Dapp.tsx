@@ -1,5 +1,7 @@
 import React, { createContext, useState, useCallback, useEffect } from "react";
 import { ethers } from "ethers";
+import IPFS from "ipfs-core";
+import IPFST from "ipfs-core/src/components";
 
 import { addresses as _addresses, abis as _abis } from "../contracts/index";
 
@@ -12,6 +14,7 @@ type abis = {
 };
 
 type DappContextType = {
+  ipfs?: IPFST;
   provider?: ethers.providers.Web3Provider;
   signer?: ethers.providers.JsonRpcSigner;
   connect: () => void;
@@ -49,6 +52,7 @@ export const DappContextProvider: React.FC = ({ children }) => {
   const [abis, setAbis] = useState<DappContextType["abis"]>(
     DefaultDappContext.abis
   );
+  const [ipfs, setIpfs] = useState<IPFST>();
 
   const getAddress = useCallback(async () => {
     if (!signer) return;
@@ -103,6 +107,15 @@ export const DappContextProvider: React.FC = ({ children }) => {
     setSigner(_signer);
   }, []);
 
+  const createIpfs = async () => {
+    const _ipfs = await IPFS.create();
+    setIpfs(_ipfs);
+  };
+
+  useEffect(() => {
+    createIpfs();
+  }, []);
+
   useEffect(() => {
     getAddress();
     getNetwork();
@@ -111,7 +124,16 @@ export const DappContextProvider: React.FC = ({ children }) => {
 
   return (
     <DappContext.Provider
-      value={{ provider, connect, signer, address, addresses, network, abis }}
+      value={{
+        provider,
+        connect,
+        signer,
+        address,
+        addresses,
+        network,
+        abis,
+        ipfs,
+      }}
     >
       {children}
     </DappContext.Provider>

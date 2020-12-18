@@ -11,6 +11,8 @@
     "@types/react-router-dom": "^5.1.6",
     "ethers": "^5.0.24",
     "history": "^5.0.0",
+    "ipfs-core": "^0.3.1",
+    "it-to-buffer": "^1.0.4",
     "node-sass": "^4.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",

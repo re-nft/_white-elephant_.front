@@ -2,9 +2,12 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Box, Button, Typography } from "@material-ui/core";
 import { ethers } from "ethers";
 
+import { fetch } from "../api/ipfs";
+import DappContext from "../contexts/Dapp";
 import ContractsContext from "../contexts/Contracts";
 import frame from "../public/img/frame.png";
 import usePoller from "../hooks/Poller";
+import { abis } from "../contracts";
 
 type Data = {
   address: string;
@@ -30,8 +33,6 @@ const UnwrapButton: React.FC<UnwrapButtonProps> = ({
   stolenUnwrap,
   useStolenUnwrap,
 }) => {
-  console.log("useStolenUnwarp", useStolenUnwrap);
-
   const handleUnwrap = useCallback(async () => {
     if (useStolenUnwrap) {
       return await stolenUnwrap();
@@ -111,6 +112,7 @@ const Table = () => {
 };
 
 const MainFrame: React.FC = () => {
+  const { signer, ipfs } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
   const [stolen, setStolen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -158,8 +160,14 @@ const MainFrame: React.FC = () => {
       iWasStolenFrom,
     };
 
+    if (nftAddress !== ethers.constants.AddressZero && signer && ipfs) {
+      const nftContract = new ethers.Contract(nftAddress, abis.erc721, signer);
+      const meta = await fetch({ contract: nftContract, tokenId, ipfs });
+      console.log("meta", meta);
+    }
+
     setMyPrize(_prize);
-  }, [whiteElephant]);
+  }, [whiteElephant, signer, ipfs]);
 
   usePoller(handlePrize, 20000);
 
