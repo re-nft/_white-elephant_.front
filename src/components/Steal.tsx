@@ -36,7 +36,7 @@ const Steal = () => {
   const { address } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
   const [available, setAvailable] = useState<StealT[]>([]);
-  const [error, setError] = useState<string>("");
+  const [, setError] = useState<string>("");
 
   // responsible for polling the nfts that can be stolen
   // by the user
