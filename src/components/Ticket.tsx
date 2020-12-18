@@ -50,7 +50,7 @@ const Ticket: React.FC = () => {
       await contract.buyTicket(overrides);
       setError("");
     } catch (err) {
-      setError(String(err?.data?.message));
+      setError(err?.data?.message || "unknown");
     }
   }, [whiteElephant, price]);
 

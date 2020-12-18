@@ -1,6 +1,6 @@
 const addresses = {
   localhost: {
-    whiteElephant: "0xCD8a1C3ba11CF5ECfa6267617243239504a98d90",
+    whiteElephant: "0xfaAddC93baf78e89DCf37bA67943E1bE8F37Bb8c",
   },
   hardhat: {
     whiteElephant: "",

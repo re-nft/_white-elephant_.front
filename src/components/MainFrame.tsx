@@ -14,7 +14,36 @@ type Data = {
 type Prize = {
   nft: string;
   tokenId: number;
-  iWasStolenFrom: number;
+  iWasStolenFrom: boolean;
+};
+
+type Optional<T> = T | undefined | null;
+
+type UnwrapButtonProps = {
+  normalUnwrap: () => Promise<void>;
+  stolenUnwrap: () => Promise<void>;
+  useStolenUnwrap: boolean;
+};
+
+const UnwrapButton: React.FC<UnwrapButtonProps> = ({
+  normalUnwrap,
+  stolenUnwrap,
+  useStolenUnwrap,
+}) => {
+  console.log("useStolenUnwarp", useStolenUnwrap);
+
+  const handleUnwrap = useCallback(async () => {
+    if (useStolenUnwrap) {
+      return await stolenUnwrap();
+    }
+    return await normalUnwrap();
+  }, [normalUnwrap, stolenUnwrap, useStolenUnwrap]);
+
+  return (
+    <Button variant="outlined" onClick={handleUnwrap}>
+      Unwrap
+    </Button>
+  );
 };
 
 const Table = () => {
@@ -70,7 +99,7 @@ const Table = () => {
           data.map((d) => (
             <tr
               key={`${d.address}::${d.order}`}
-              style={{ background: currTurn === d.order ? "green" : "" }}
+              style={{ background: currTurn + 1 === d.order ? "green" : "" }}
             >
               <td>{d.address}</td>
               <td>{d.order}</td>
@@ -85,7 +114,7 @@ const MainFrame: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const [stolen, setStolen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const [myPrize, setMyPrize] = useState<Prize>();
+  const [myPrize, setMyPrize] = useState<Optional<Prize>>();
 
   const wasStolenFrom = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -101,7 +130,17 @@ const MainFrame: React.FC = () => {
     try {
       await contract.unwrap();
     } catch (err) {
-      setError(err.data.message);
+      setError(err?.data?.message || "unknown");
+    }
+  }, [whiteElephant]);
+
+  const stolenUnwrap = useCallback(async () => {
+    const { contract } = whiteElephant;
+    if (!contract) return;
+    try {
+      await contract.unwrapAfterSteal();
+    } catch (err) {
+      setError(err?.data?.message || "unknown");
     }
   }, [whiteElephant]);
 
@@ -110,7 +149,6 @@ const MainFrame: React.FC = () => {
     if (!contract) return;
 
     const nftAddress = await contract.myNftAddress();
-    if (!nftAddress || ethers.constants.AddressZero === nftAddress) return;
     let tokenId = Number(await contract.myTokenId());
     let iWasStolenFrom = await contract.myStolenFrom();
 
@@ -119,6 +157,8 @@ const MainFrame: React.FC = () => {
       tokenId,
       iWasStolenFrom,
     };
+
+    console.log("_prize", _prize);
 
     setMyPrize(_prize);
   }, [whiteElephant]);
@@ -137,7 +177,7 @@ const MainFrame: React.FC = () => {
       <Box>
         <img src={frame} alt="painting frame" />
       </Box>
-      {myPrize && (
+      {myPrize && myPrize.nft !== ethers.constants.AddressZero && (
         <Box style={{ marginTop: "2em" }}>
           <Typography>NFT Address: {myPrize.nft}</Typography>
           <Typography>
@@ -157,20 +197,23 @@ const MainFrame: React.FC = () => {
           </Typography>
         )}
         <Box style={{ marginTop: "2em" }}>
-          {!stolen && !myPrize && (
-            <Button variant="outlined" onClick={unwrap}>
-              Unwrap
-            </Button>
-          )}
-          {stolen && (
+          {stolen && myPrize?.nft === ethers.constants.AddressZero && (
             <Box>
               <Typography>Oh oh, someone naughty stole from you</Typography>
               <Typography>Go ahead, unwrap or steal</Typography>
               <Typography>Now, noone will be able to steal from you</Typography>
-
-              <Button variant="outlined" onClick={unwrap}>
-                Unwrap again...
-              </Button>
+            </Box>
+          )}
+          {myPrize?.nft === ethers.constants.AddressZero && (
+            <Box style={{ marginTop: "2em" }}>
+              <UnwrapButton
+                normalUnwrap={unwrap}
+                stolenUnwrap={stolenUnwrap}
+                useStolenUnwrap={
+                  myPrize?.iWasStolenFrom &&
+                  myPrize?.nft === ethers.constants.AddressZero
+                }
+              />
             </Box>
           )}
         </Box>

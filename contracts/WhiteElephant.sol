@@ -24,14 +24,14 @@ contract WhiteElephant is Ownable {
     // todo: this will be chainlink
     // 0 signifies no ticket number. i.e. you have not bought the ticket
     uint16 public orderNum = 1;
-    uint16 public currNftToUnwrap = 1;
+    uint16 public currNftToUnwrap = 0;
     uint256 public ticketPrice = 0.1 ether;
 
     address[] public players;
     Nft[] public allNfts;
 
     modifier yourOrder(address _sender) {
-        require(info[_sender].orderNum == currNftToUnwrap, "not your turn");
+        require(info[_sender].orderNum == currNftToUnwrap + 1, "not your turn");
         _;
     }
 
@@ -62,25 +62,26 @@ contract WhiteElephant is Ownable {
         allNfts.push(Nft(_nft, _tokenId));
     }
 
-    function stealNft(uint256 _stealFrom, address _theirAddress)
+    function stealNft(address _theirAddress)
         public
         yourOrder(msg.sender)
         onChristmas
     {
         Info storage player = info[msg.sender];
+        Info storage them = info[_theirAddress];
 
-        require(player.orderNum > _stealFrom, "cant steal from them");
-        require(
-            info[_theirAddress].wasStolenFrom == false,
-            "cant steal from them again"
-        );
+        require(them.exists == true);
+        require(player.orderNum > them.orderNum, "cant steal from them");
+        require(them.wasStolenFrom == false, "cant steal from them again");
 
         player.nft = info[_theirAddress].nft;
         player.tokenId = info[_theirAddress].tokenId;
 
-        info[_theirAddress].wasStolenFrom = true;
-        info[_theirAddress].nft = address(0);
-        info[_theirAddress].tokenId = 0;
+        them.wasStolenFrom = true;
+        them.nft = address(0);
+        them.tokenId = 0;
+
+        currNftToUnwrap++;
     }
 
     function unwrap() public yourOrder(msg.sender) onChristmas {
@@ -90,6 +91,21 @@ contract WhiteElephant is Ownable {
         player.tokenId = allNfts[currNftToUnwrap].tokenId;
 
         currNftToUnwrap++;
+    }
+
+    function unwrapAfterSteal() public onChristmas {
+        Info storage player = info[msg.sender];
+
+        require(player.exists == true);
+        require(player.wasStolenFrom == true);
+        require(player.nft == address(0));
+        require(player.tokenId == 0);
+        require(player.orderNum != 0);
+        require(player.hasTicket == true);
+
+        // todo: chainlink
+        player.nft = address(allNfts[currNftToUnwrap].nft);
+        player.tokenId = allNfts[currNftToUnwrap].tokenId;
     }
 
     // info related --=
