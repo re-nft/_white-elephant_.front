@@ -99,7 +99,7 @@ const Table = () => {
           data.map((d) => (
             <tr
               key={`${d.address}::${d.order}`}
-              style={{ background: currTurn + 1 === d.order ? "green" : "" }}
+              style={{ background: currTurn === d.order - 1 ? "green" : "" }}
             >
               <td>{d.address}</td>
               <td>{d.order}</td>
@@ -157,8 +157,6 @@ const MainFrame: React.FC = () => {
       tokenId,
       iWasStolenFrom,
     };
-
-    console.log("_prize", _prize);
 
     setMyPrize(_prize);
   }, [whiteElephant]);
