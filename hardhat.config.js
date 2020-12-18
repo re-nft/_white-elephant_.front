@@ -4,29 +4,6 @@ const fs = require("fs");
 // const { config, ethers, task } = require("hardhat");
 
 const defaultNetwork = "localhost";
-const WRITE_PATH = "./src/contracts/addresses.ts";
-const addressesTemplate = ({
-  localhost = "",
-  hardhat = "",
-  goerli = "",
-  homestead = "",
-}) => {
-  return `const addresses = {
-  localhost: {
-    whiteElephant: "${localhost}",
-  },
-  hardhat: {
-    whiteElephant: "${hardhat}",
-  },
-  goerli: {
-    whiteElephant: "${goerli}",
-  },
-  homestead: {
-    whiteElephant: "${homestead}",
-  },
-};
-export default addresses;`;
-};
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -39,20 +16,20 @@ task("accounts", "Prints the list of accounts", async () => {
 });
 
 // this task will write the addresses of the contracts to src/contracts/addresses.ts
-task(
-  "update-addresses",
-  "Updates the contracts/addresses",
-  async (taskArguments, hre, runSuper) => {
-    const WhiteElephant = await ethers.getContractFactory("WhiteElephant");
-    const whiteElephant = await WhiteElephant.deploy();
+// task(
+//   "update-addresses",
+//   "Updates the contracts/addresses",
+//   async (taskArguments, hre, runSuper) => {
+//     const WhiteElephant = await ethers.getContractFactory("WhiteElephant");
+//     const whiteElephant = await WhiteElephant.deploy();
 
-    const addresses = addressesTemplate({
-      [hre.network.name]: whiteElephant.address,
-    });
+//     const addresses = addressesTemplate({
+//       [hre.network.name]: whiteElephant.address,
+//     });
 
-    fs.writeFileSync(WRITE_PATH, addresses);
-  }
-);
+//     fs.writeFileSync(WRITE_PATH, addresses);
+//   }
+// );
 
 task("write-abis", "Writes the abis", async (taskArgs, hre, runSuper) => {
   const data = fs.readFileSync(
@@ -100,10 +77,11 @@ module.exports = {
       // },
     },
     goerli: {
-      url: "https://goerli.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", //<---- YOUR INFURA ID! (or it won't work)
-      // accounts: {
-      //   mnemonic: mnemonic(),
-      // },
+      url: `https://goerli.infura.io/v3/${process.env.INFURA_KEY}`, //<---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic:
+          "spoon mouse pupil sail verify message seat cross setup stumble park dentist",
+      },
     },
     xdai: {
       url: "https://dai.poa.network",
