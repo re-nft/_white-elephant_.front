@@ -52,7 +52,7 @@ async function main() {
       }, you are welcome...`
     );
     const tx = await nft.awardNft(allSigners[0].address);
-    // const receipt = await tx.wait(1);
+    const receipt = await tx.wait(1);
     // console.log("Receipt", receipt);
   }
 
@@ -63,9 +63,10 @@ async function main() {
     // console.log(`Owner of tokenId: ${i + 1} is ${await nft.ownerOf(i + 1)}`);
     console.log(`Depositing the NFTs into the contract now, tokenId: ${i + 1}`);
     try {
-      await whiteElephant.depositNft(nft.address, i + 1, {
+      const tx = await whiteElephant.depositNft(nft.address, i + 1, {
         gasLimit: 5_000_000,
       });
+      await tx.wait(1);
     } catch (err) {
       console.warn("unpredictable gas probably...");
     }
