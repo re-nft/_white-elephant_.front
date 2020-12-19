@@ -117,6 +117,7 @@ const MainFrame: React.FC = () => {
   const [stolen, setStolen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [myPrize, setMyPrize] = useState<Optional<Prize>>();
+  const [blob, setBlob] = useState<Blob>();
 
   const wasStolenFrom = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -162,7 +163,8 @@ const MainFrame: React.FC = () => {
 
     if (nftAddress !== ethers.constants.AddressZero && signer) {
       const nftContract = new ethers.Contract(nftAddress, abis.erc721, signer);
-      await fetch({ contract: nftContract, tokenId, ipfs });
+      const _blob = await fetch({ contract: nftContract, tokenId, ipfs });
+      setBlob(_blob);
     }
 
     setMyPrize(_prize);
@@ -180,7 +182,14 @@ const MainFrame: React.FC = () => {
         <Typography variant="h2">Thy Prize</Typography>
       </Box>
       <Box>
-        <img src={frame} alt="painting frame" />
+        {/* <img src={frame} alt="painting frame" /> */}
+        {blob && (
+          <img
+            src={URL.createObjectURL(blob)}
+            alt="lol"
+            style={{ maxWidth: "300px", maxHeight: "300px" }}
+          />
+        )}
       </Box>
       {myPrize && myPrize.nft !== ethers.constants.AddressZero && (
         <Box style={{ marginTop: "2em" }}>
