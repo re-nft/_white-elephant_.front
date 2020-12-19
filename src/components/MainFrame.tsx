@@ -160,10 +160,9 @@ const MainFrame: React.FC = () => {
       iWasStolenFrom,
     };
 
-    if (nftAddress !== ethers.constants.AddressZero && signer && ipfs) {
+    if (nftAddress !== ethers.constants.AddressZero && signer) {
       const nftContract = new ethers.Contract(nftAddress, abis.erc721, signer);
-      const meta = await fetch({ contract: nftContract, tokenId, ipfs });
-      console.log("meta", meta);
+      await fetch({ contract: nftContract, tokenId, ipfs });
     }
 
     setMyPrize(_prize);

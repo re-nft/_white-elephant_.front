@@ -1,7 +1,6 @@
 import React, { createContext, useState, useCallback, useEffect } from "react";
 import { ethers } from "ethers";
-import IPFS from "ipfs-core";
-import IPFST from "ipfs-core/src/components";
+import IPFS from "ipfs";
 
 import { addresses as _addresses, abis as _abis } from "../contracts/index";
 
@@ -14,7 +13,7 @@ type abis = {
 };
 
 type DappContextType = {
-  ipfs?: IPFST;
+  ipfs?: any;
   provider?: ethers.providers.Web3Provider;
   signer?: ethers.providers.JsonRpcSigner;
   connect: () => void;
@@ -52,7 +51,17 @@ export const DappContextProvider: React.FC = ({ children }) => {
   const [abis, setAbis] = useState<DappContextType["abis"]>(
     DefaultDappContext.abis
   );
-  const [ipfs, setIpfs] = useState<IPFST>();
+  const [ipfs, setIpfs] = useState<DappContextType["ipfs"]>();
+
+  const getIpfs = useCallback(async () => {
+    const _ipfs = await IPFS.create();
+    setIpfs(_ipfs);
+  }, []);
+
+  useEffect(() => {
+    console.log("this should run once");
+    getIpfs();
+  }, []);
 
   const getAddress = useCallback(async () => {
     if (!signer) return;
@@ -76,7 +85,6 @@ export const DappContextProvider: React.FC = ({ children }) => {
       console.warn("can't identify the network");
       return;
     }
-    console.log(network);
     const whiteElephantAddr = _addresses[network].whiteElephant;
     const whiteElephantAbi = _abis.whiteElephant;
     setAddresses({ whiteElephant: whiteElephantAddr });
@@ -105,15 +113,6 @@ export const DappContextProvider: React.FC = ({ children }) => {
 
     const _signer = _provider.getSigner();
     setSigner(_signer);
-  }, []);
-
-  const createIpfs = async () => {
-    const _ipfs = await IPFS.create();
-    setIpfs(_ipfs);
-  };
-
-  useEffect(() => {
-    createIpfs();
   }, []);
 
   useEffect(() => {

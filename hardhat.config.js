@@ -35,8 +35,13 @@ task("write-abis", "Writes the abis", async (taskArgs, hre, runSuper) => {
   const data = fs.readFileSync(
     "./artifacts/contracts/WhiteElephant.sol/WhiteElephant.json"
   );
+  const nftData = fs.readFileSync(
+    "./artifacts/contracts/mocks/NFT.sol/Nft.json"
+  );
   fs.writeFileSync("./src/contracts/abis/WhiteElephant.json", data);
+  fs.writeFileSync("./src/contracts/abis/IERC721.json", nftData);
   console.log("Wrote WhiteElephant.json artifact");
+  console.log("Wrote NFT.json artifact");
 });
 
 // You need to export an object to set up your config

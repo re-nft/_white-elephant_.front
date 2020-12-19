@@ -57,6 +57,11 @@ contract WhiteElephant is Ownable {
         players.push(msg.sender);
     }
 
+    // todo: people may just randomly send us ERC721s to this contract
+    // this will not participate in the game. Only the ones that have been
+    // send properly like the below will participate in the game
+    // todo: ensure that on event end whatever is left behind in  terms
+    // of ERC20s or ERC721s gets transfered to the creator of this contract
     function depositNft(ERC721 _nft, uint256 _tokenId) public {
         _nft.transferFrom(msg.sender, address(this), _tokenId);
         allNfts.push(Nft(_nft, _tokenId));
