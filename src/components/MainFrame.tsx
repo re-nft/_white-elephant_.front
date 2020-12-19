@@ -2,10 +2,10 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Box, Button, Typography } from "@material-ui/core";
 import { ethers } from "ethers";
 
-import { fetch } from "../api/ipfs";
+import { fetchIpfs } from "../api/ipfs";
 import DappContext from "../contexts/Dapp";
 import ContractsContext from "../contexts/Contracts";
-import frame from "../public/img/frame.png";
+// import frame from "../public/img/frame.png";
 import usePoller from "../hooks/Poller";
 import { abis } from "../contracts";
 
@@ -163,14 +163,14 @@ const MainFrame: React.FC = () => {
 
     if (nftAddress !== ethers.constants.AddressZero && signer) {
       const nftContract = new ethers.Contract(nftAddress, abis.erc721, signer);
-      const _blob = await fetch({ contract: nftContract, tokenId, ipfs });
+      const _blob = await fetchIpfs({ contract: nftContract, tokenId, ipfs });
       setBlob(_blob);
     }
 
     setMyPrize(_prize);
   }, [whiteElephant, signer, ipfs]);
 
-  usePoller(handlePrize, 20000);
+  usePoller(handlePrize, 30000);
 
   useEffect(() => {
     wasStolenFrom();

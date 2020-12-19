@@ -1,12 +1,12 @@
 const addresses = {
   localhost: {
-    whiteElephant: "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00",
+    whiteElephant: "",
   },
   hardhat: {
     whiteElephant: "",
   },
   goerli: {
-    whiteElephant: "",
+    whiteElephant: "0x325e26445CbbB90aD7489Cb0eD09Ca5f1f695b7B",
   },
   homestead: {
     whiteElephant: "",

@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import toBuffer from "it-to-buffer";
+// import toBuffer from "it-to-buffer";
 
 type fetchArgs = {
   ipfs: any;
@@ -7,64 +7,96 @@ type fetchArgs = {
   tokenId: ethers.BigNumber | number;
 };
 
-export const fetch = async ({ ipfs, contract, tokenId }: fetchArgs) => {
+const debug = (verbose: boolean, ...args) => {
+  if (verbose) console.debug(...args);
+};
+
+const resolveMedia = async (ipfs: any, url: string) => {
+  debug(true, "resolvedImageUrl", url);
+
+  if (url.startsWith("ipfs://")) {
+    url = url.substr(7, url.length);
+  }
+
+  let ipfsFile;
+  let stream = ipfs.get(url);
+
+  debug(true, "stream", stream);
+
+  // todo: there is an it to get first
+  let ix = 0;
+  for await (const buf of stream) {
+    if (ix > 0) {
+      console.warn("more than one file");
+    }
+    debug(true, "cid", buf);
+    ipfsFile = buf;
+    ix++;
+  }
+
+  const imgBuffer = [];
+  stream = ipfsFile.content;
+  debug(true, "stream", stream);
+  for await (const buf of stream) {
+    imgBuffer.push(buf);
+  }
+
+  debug(true, imgBuffer);
+  //@ts-ignore
+  const blob = new Blob(imgBuffer);
+
+  debug(true, blob);
+  return blob;
+};
+
+// todo: this is pain. REFACTOR. worst code I have written in a while
+export const fetchIpfs = async ({ ipfs, contract, tokenId }: fetchArgs) => {
   try {
     // todo: some of them (most of them?) use uri function name... So need to extend the abi, and check both at the same time
     // only when both aren't returning anything should we hint the user to contact us
     const tokenUri: string = await contract.tokenURI(tokenId);
 
-    // now fetch the meta from the ipfs
-    if (!tokenUri.includes("ipfs/")) {
-      console.warn("token does not contain the ipfs url");
-      console.warn(
-        `give our developer monkeys these\n--------------\naddr:${contract.address}\ntokenId:${tokenId}\n--------------`
-      );
-      return;
+    let meta: any;
+
+    // if the tokenUri starts with https, then we can fetch the JSON
+    if (tokenUri.startsWith("http")) {
+      meta = await (await fetch(tokenUri)).json();
     }
 
-    console.log("tokenUri", tokenUri);
+    if (tokenUri.startsWith("ipfs")) {
+      const blob = await resolveMedia(ipfs, tokenUri);
+      return blob;
+    }
 
-    // if the file does not start with the ipfs prefix, then the meta is a simple json file
-    // else pull the ipfs and look for image in there
+    debug(true, "tokenUri", tokenUri);
 
-    // if starts with https can obviously use axios for that
-    // todo: also rename this
-    // todo: ipfs utils must have something on this
-    const startIx = tokenUri.indexOf("ipfs/");
-    const resolvedIpfsUri = tokenUri.substr(startIx + 5, tokenUri.length);
+    if ("image" in meta) {
+      debug(true, "image url", meta.image);
 
-    // console.log("pull this", resolvedIpfsUri);
-    // console.log(await ipfs.id());
-    // console.log(
-    //   "pulling",
-    //   "ipfs://ipfs/QmREKWm51YhKNyRnwLRUY5VpK3Fxwh14T5x8HNKdpfdQhs/image.png"
-    // );
+      // pulling the image from ipfs
+      if (!meta.image.startsWith("ipfs")) {
+        console.warn("token does not contain the ipfs url");
+        console.warn(
+          `give our developer monkeys these\n--------------\naddr:${contract.address}\ntokenId:${tokenId}\n--------------`
+        );
+        return;
+      }
 
-    const meta = await toBuffer(ipfs.cat(resolvedIpfsUri));
+      debug(true, "meta", meta);
 
-    const imgBufferUrl = JSON.parse(meta.toString()).image;
-    const resolvedImgBufferUrl = imgBufferUrl.substr(
-      imgBufferUrl.indexOf("Qm"),
-      imgBufferUrl.length
-    );
-    console.log("imgUrl", resolvedImgBufferUrl);
+      const resolvedImageUrl = meta.image.substr(
+        meta.image.lastIndexOf("ipfs/") + 5,
+        meta.image.length
+      );
 
-    const imgBuffer = await toBuffer(ipfs.get(resolvedImgBufferUrl));
+      const blob = resolveMedia(ipfs, resolvedImageUrl);
 
-    console.log("imgBuffer keys", Object.keys(imgBuffer));
-
-    // console.log(meta.toString());
-    console.log(meta.toJSON());
-    // console.log("meta inside", meta);
-
-    const blob = new Blob([imgBuffer.buffer], { type: "image/png" } /* (1) */);
-
-    // console.log("blob", blob);
-
-    return blob;
-    // const meta = await toBuffer(await ipfs.get(tokenUri));
+      return blob;
+    }
+    return null;
   } catch (err) {
-    console.error(err);
+    console.warn("could not fetch the ipfs meta");
+    console.warn(err);
     return;
   }
 };

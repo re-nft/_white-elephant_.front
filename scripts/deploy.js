@@ -45,15 +45,29 @@ async function main() {
   const Nft = await ethers.getContractFactory("Nft");
   const nft = await Nft.deploy();
 
-  console.log("Awarding the dummy NFTs, you are welcome...");
   for (let i = 0; i < 10; i++) {
-    await nft.awardNft(allSigners[0].address);
+    console.log(
+      `Awarding the NFTs, tokenId: ${i + 1} to ${
+        allSigners[0].address
+      }, you are welcome...`
+    );
+    const tx = await nft.awardNft(allSigners[0].address);
+    // const receipt = await tx.wait(1);
+    // console.log("Receipt", receipt);
   }
 
+  console.log("Approving the white elephant contract");
   await nft.setApprovalForAll(whiteElephant.address, true);
 
   for (let i = 0; i < 10; i++) {
-    await whiteElephant.depositNft(nft.address, i + 1);
+    // console.log(`Owner of tokenId: ${i + 1} is ${await nft.ownerOf(i + 1)}`);
+    console.log(`Depositing the NFTs into the contract now, tokenId: ${i + 1}`);
+    try {
+      await nft.approve(whiteElephant.address, i + 1);
+      await whiteElephant.depositNft(nft.address, i + 1);
+    } catch (err) {
+      console.warn("unpredictable gas probably...");
+    }
   }
 
   console.log("Nft deployed to:", nft.address);
@@ -66,7 +80,6 @@ async function main() {
   });
   fs.writeFileSync("./all.addresses", allAddresses);
   // ----
-
   console.log("Writing the addresses of the deployed contracts...");
   const data = addressesTemplate({ [network.name]: whiteElephant.address });
   fs.writeFileSync(WRITE_PATH, data);

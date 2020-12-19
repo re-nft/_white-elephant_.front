@@ -2,7 +2,6 @@ import React, { useState, useCallback, useContext } from "react";
 import { Button, Box, Typography } from "@material-ui/core";
 
 import usePoller from "../hooks/Poller";
-import frame from "../public/img/frame.png";
 import ContractsContext from "../contexts/Contracts";
 import DappContext from "../contexts/Dapp";
 import { ethers } from "ethers";
@@ -103,7 +102,7 @@ const Steal = () => {
               key={`${a.nftAddress}::${a.tokenId}`}
               style={{ display: "flex", flexDirection: "column" }}
             >
-              <img src={frame} alt="painting frame" />
+              {/* <img src={frame} alt="painting frame" /> */}
               <Box style={{ marginTop: "2em" }}>
                 <Typography>Current owner: {a.currOwner}</Typography>
                 <Typography>NFT Address: {a.nftAddress}</Typography>

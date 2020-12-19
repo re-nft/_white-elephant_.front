@@ -61,7 +61,7 @@ export const DappContextProvider: React.FC = ({ children }) => {
   useEffect(() => {
     console.log("this should run once");
     getIpfs();
-  }, []);
+  }, [getIpfs]);
 
   const getAddress = useCallback(async () => {
     if (!signer) return;
