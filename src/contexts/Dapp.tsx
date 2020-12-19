@@ -1,8 +1,9 @@
 import React, { createContext, useState, useCallback, useEffect } from "react";
 import { ethers } from "ethers";
-import IPFS from "ipfs";
 
 import { addresses as _addresses, abis as _abis } from "../contracts/index";
+import useIpfsFactory from "../hooks/use-ipfs-factory";
+import useIpfs from "../hooks/use-ipfs";
 
 type addresses = {
   whiteElephant: string;
@@ -14,6 +15,7 @@ type abis = {
 
 type DappContextType = {
   ipfs?: any;
+  isIpfsReady: boolean;
   provider?: ethers.providers.Web3Provider;
   signer?: ethers.providers.JsonRpcSigner;
   connect: () => void;
@@ -34,11 +36,14 @@ const DefaultDappContext = {
   abis: {
     whiteElephant: "",
   },
+  isIpfsReady: false,
 };
 
 const DappContext = createContext<DappContextType>(DefaultDappContext);
 
 export const DappContextProvider: React.FC = ({ children }) => {
+  const { ipfs, isIpfsReady } = useIpfsFactory();
+  useIpfs(ipfs, "id");
   const [provider, setProvider] = useState<DappContextType["provider"]>();
   const [signer, setSigner] = useState<DappContextType["signer"]>();
   const [address, setAddress] = useState<DappContextType["address"]>();
@@ -51,17 +56,6 @@ export const DappContextProvider: React.FC = ({ children }) => {
   const [abis, setAbis] = useState<DappContextType["abis"]>(
     DefaultDappContext.abis
   );
-  const [ipfs, setIpfs] = useState<DappContextType["ipfs"]>();
-
-  const getIpfs = useCallback(async () => {
-    const _ipfs = await IPFS.create();
-    setIpfs(_ipfs);
-  }, []);
-
-  useEffect(() => {
-    console.log("this should run once");
-    getIpfs();
-  }, [getIpfs]);
 
   const getAddress = useCallback(async () => {
     if (!signer) return;
@@ -124,6 +118,8 @@ export const DappContextProvider: React.FC = ({ children }) => {
   return (
     <DappContext.Provider
       value={{
+        ipfs,
+        isIpfsReady,
         provider,
         connect,
         signer,
@@ -131,7 +127,6 @@ export const DappContextProvider: React.FC = ({ children }) => {
         addresses,
         network,
         abis,
-        ipfs,
       }}
     >
       {children}

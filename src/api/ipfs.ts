@@ -50,7 +50,7 @@ const resolveMedia = async (ipfs: any, url: string) => {
 };
 
 // todo: this is pain. REFACTOR. worst code I have written in a while
-export const fetchIpfs = async ({ ipfs, contract, tokenId }: fetchArgs) => {
+export const fetchIpfs = async ({ contract, tokenId, ipfs }: fetchArgs) => {
   try {
     // todo: some of them (most of them?) use uri function name... So need to extend the abi, and check both at the same time
     // only when both aren't returning anything should we hint the user to contact us

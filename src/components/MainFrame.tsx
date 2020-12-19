@@ -8,6 +8,7 @@ import ContractsContext from "../contexts/Contracts";
 // import frame from "../public/img/frame.png";
 import usePoller from "../hooks/Poller";
 import { abis } from "../contracts";
+import Spinner from "./Spinner";
 
 type Data = {
   address: string;
@@ -18,6 +19,7 @@ type Prize = {
   nft: string;
   tokenId: number;
   iWasStolenFrom: boolean;
+  media: Blob;
 };
 
 type Optional<T> = T | undefined | null;
@@ -112,12 +114,12 @@ const Table = () => {
 };
 
 const MainFrame: React.FC = () => {
-  const { signer, ipfs } = useContext(DappContext);
+  const { signer, ipfs, isIpfsReady } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
   const [stolen, setStolen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [myPrize, setMyPrize] = useState<Optional<Prize>>();
-  const [blob, setBlob] = useState<Blob>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const wasStolenFrom = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -149,28 +151,67 @@ const MainFrame: React.FC = () => {
 
   const handlePrize = useCallback(async () => {
     const { contract } = whiteElephant;
-    if (!contract) return;
+    if (!contract) {
+      console.warn("no contract instance, skipping");
+      return;
+    }
 
     const nftAddress = await contract.myNftAddress();
     let tokenId = Number(await contract.myTokenId());
+
+    if (nftAddress === myPrize?.nft && tokenId === myPrize?.tokenId) {
+      console.debug("same nft, skipping");
+      return;
+    }
+
     let iWasStolenFrom = await contract.myStolenFrom();
 
     const _prize = {
       nft: nftAddress,
       tokenId,
       iWasStolenFrom,
+      media: undefined,
     };
 
-    if (nftAddress !== ethers.constants.AddressZero && signer) {
-      const nftContract = new ethers.Contract(nftAddress, abis.erc721, signer);
-      const _blob = await fetchIpfs({ contract: nftContract, tokenId, ipfs });
-      setBlob(_blob);
+    setMyPrize(_prize);
+  }, [whiteElephant, myPrize?.nft, myPrize?.tokenId]);
+
+  const fetchMedia = async () => {
+    if (!isIpfsReady) {
+      console.debug("Ipfs not yet ready");
+      return;
+    }
+    if (isLoading) {
+      console.debug("Already loading the media. Skipping...");
+      return;
+    }
+    if (!myPrize) {
+      console.debug("no prize just yet, skipping");
+      return;
+    }
+    if (myPrize?.media) {
+      console.debug("already fetched the media");
+      return;
+    }
+    setIsLoading(true);
+
+    let _blob;
+
+    if (myPrize.nft !== ethers.constants.AddressZero && signer) {
+      const nftContract = new ethers.Contract(myPrize.nft, abis.erc721, signer);
+      _blob = await fetchIpfs({
+        contract: nftContract,
+        tokenId: myPrize.tokenId,
+        ipfs,
+      });
     }
 
-    setMyPrize(_prize);
-  }, [whiteElephant, signer, ipfs]);
+    setMyPrize((prev) => ({ ...prev, media: _blob }));
+    setIsLoading(false);
+  };
 
-  usePoller(handlePrize, 30000);
+  usePoller(handlePrize, 10000);
+  usePoller(fetchMedia, 10000);
 
   useEffect(() => {
     wasStolenFrom();
@@ -181,11 +222,16 @@ const MainFrame: React.FC = () => {
       <Box style={{ marginBottom: "4em" }}>
         <Typography variant="h2">Thy Prize</Typography>
       </Box>
-      <Box>
+      <Box style={{ position: "relative" }}>
         {/* <img src={frame} alt="painting frame" /> */}
-        {blob && (
+        {isLoading && (
+          <Box style={{ position: "absolute", top: "25%", left: "50%" }}>
+            <Spinner />
+          </Box>
+        )}
+        {myPrize && myPrize.media && (
           <img
-            src={URL.createObjectURL(blob)}
+            src={URL.createObjectURL(myPrize.media)}
             alt="lol"
             style={{ maxWidth: "300px", maxHeight: "300px" }}
           />
