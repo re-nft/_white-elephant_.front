@@ -63,8 +63,9 @@ async function main() {
     // console.log(`Owner of tokenId: ${i + 1} is ${await nft.ownerOf(i + 1)}`);
     console.log(`Depositing the NFTs into the contract now, tokenId: ${i + 1}`);
     try {
-      await nft.approve(whiteElephant.address, i + 1);
-      await whiteElephant.depositNft(nft.address, i + 1);
+      await whiteElephant.depositNft(nft.address, i + 1, {
+        gasLimit: 5_000_000,
+      });
     } catch (err) {
       console.warn("unpredictable gas probably...");
     }
