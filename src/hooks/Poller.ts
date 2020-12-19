@@ -1,22 +1,38 @@
 import { useEffect, useRef } from "react";
 
-export default function usePoller(fn, delay) {
+export default function useInterval(callback, delay) {
   const savedCallback = useRef();
-
+  // Remember the latest callback
   useEffect(() => {
-    savedCallback.current = fn;
-    fn();
-  }, [fn]);
+    savedCallback.current = callback;
+  }, [callback]);
 
+  // Set up the interval
   useEffect(() => {
-    if (!savedCallback) return;
-
-    //@ts-ignore
-    const tick = async () => await savedCallback?.current();
-
-    if (delay && typeof delay === "number") {
-      const id = setInterval(tick, delay);
-      return () => clearInterval(id);
+    function tick() {
+      //@ts-ignore
+      savedCallback.current();
     }
-  }, [delay, fn]);
+    if (delay !== null) {
+      const id = setInterval(tick, delay);
+      return () => {
+        clearInterval(id);
+      };
+    }
+  }, [callback, delay]);
+
+  // const savedCallback = useRef();
+  // useEffect(() => {
+  //   savedCallback.current = fn;
+  //   fn();
+  // }, [fn]);
+  // useEffect(() => {
+  //   if (!savedCallback) return;
+  //   //@ts-ignore
+  //   const tick = async () => await savedCallback?.current();
+  //   if (delay && typeof delay === "number") {
+  //     const id = setInterval(tick, delay);
+  //     return () => clearInterval(id);
+  //   }
+  // }, [delay, fn]);
 }

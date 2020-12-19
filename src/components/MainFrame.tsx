@@ -174,7 +174,7 @@ const MainFrame: React.FC = () => {
     };
 
     setMyPrize(_prize);
-  }, [whiteElephant, myPrize?.nft, myPrize?.tokenId]);
+  }, [whiteElephant, myPrize]);
 
   const fetchMedia = async () => {
     if (!isIpfsReady) {
