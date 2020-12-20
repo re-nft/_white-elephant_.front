@@ -1,25 +1,17 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 import { Box, Button, Typography } from "@material-ui/core";
 import { ethers } from "ethers";
 
-import { fetchIpfs } from "../api/ipfs";
-import DappContext from "../contexts/Dapp";
 import ContractsContext from "../contexts/Contracts";
+import MeContext from "../contexts/Me";
 // import frame from "../public/img/frame.png";
 import usePoller from "../hooks/Poller";
-import { abis } from "../contracts";
+
 import Spinner from "./Spinner";
 
 type Data = {
   address: string;
   order: number;
-};
-
-type Prize = {
-  nft: string;
-  tokenId: number;
-  iWasStolenFrom: boolean;
-  media: Blob;
 };
 
 type Optional<T> = T | undefined | null;
@@ -84,8 +76,11 @@ const Table = () => {
     setCurrTurn(_currTurn);
   }, [whiteElephant]);
 
-  usePoller(handleData, 10000);
-  usePoller(handleTurn, 10000);
+  const handleTableData = useCallback(async () => {
+    await Promise.all([handleData(), handleTurn()]);
+  }, [handleData, handleTurn]);
+
+  usePoller(handleTableData, 3000);
 
   if (data.length < 1) return <></>;
 
@@ -114,108 +109,40 @@ const Table = () => {
 };
 
 const MainFrame: React.FC = () => {
-  const { signer, ipfs, isIpfsReady } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
-  const [stolen, setStolen] = useState<boolean>(false);
+  const {
+    prize,
+    isLoadingPrize,
+    enableCheckingPrize,
+    getPrizeInfo,
+  } = useContext(MeContext);
   const [error, setError] = useState<string>("");
-  const [myPrize, setMyPrize] = useState<Optional<Prize>>();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const wasStolenFrom = useCallback(async () => {
-    const { contract } = whiteElephant;
-    if (!contract) return;
-    const _wasStolenFrom = await contract.myStolenFrom();
-    const _nft = await contract.myNftAddress();
-    setStolen(_nft === ethers.constants.AddressZero && _wasStolenFrom);
-  }, [whiteElephant]);
 
   const unwrap = useCallback(async () => {
     const { contract } = whiteElephant;
     if (!contract) return;
     try {
-      await contract.unwrap();
+      const tx = await contract.unwrap();
+      await tx.wait(1);
+      enableCheckingPrize();
+      await getPrizeInfo();
     } catch (err) {
       setError(err?.data?.message || "unknown");
     }
-  }, [whiteElephant]);
+  }, [enableCheckingPrize, getPrizeInfo, whiteElephant]);
 
   const stolenUnwrap = useCallback(async () => {
     const { contract } = whiteElephant;
     if (!contract) return;
     try {
-      await contract.unwrapAfterSteal();
+      const tx = await contract.unwrapAfterSteal();
+      await tx.wait(1);
+      enableCheckingPrize();
+      await getPrizeInfo();
     } catch (err) {
       setError(err?.data?.message || "unknown");
     }
-  }, [whiteElephant]);
-
-  const handlePrize = useCallback(async () => {
-    const { contract } = whiteElephant;
-    if (!contract) {
-      console.warn("no contract instance, skipping");
-      return;
-    }
-
-    const nftAddress = await contract.myNftAddress();
-    let tokenId = Number(await contract.myTokenId());
-
-    if (nftAddress === myPrize?.nft && tokenId === myPrize?.tokenId) {
-      console.debug("same nft, skipping");
-      return;
-    }
-
-    let iWasStolenFrom = await contract.myStolenFrom();
-
-    const _prize = {
-      nft: nftAddress,
-      tokenId,
-      iWasStolenFrom,
-      media: undefined,
-    };
-
-    setMyPrize(_prize);
-  }, [whiteElephant, myPrize]);
-
-  const fetchMedia = async () => {
-    if (!isIpfsReady) {
-      console.debug("Ipfs not yet ready");
-      return;
-    }
-    if (isLoading) {
-      console.debug("Already loading the media. Skipping...");
-      return;
-    }
-    if (!myPrize) {
-      console.debug("no prize just yet, skipping");
-      return;
-    }
-    if (myPrize?.media) {
-      console.debug("already fetched the media");
-      return;
-    }
-    setIsLoading(true);
-
-    let _blob;
-
-    if (myPrize.nft !== ethers.constants.AddressZero && signer) {
-      const nftContract = new ethers.Contract(myPrize.nft, abis.erc721, signer);
-      _blob = await fetchIpfs({
-        contract: nftContract,
-        tokenId: myPrize.tokenId,
-        ipfs,
-      });
-    }
-
-    setMyPrize((prev) => ({ ...prev, media: _blob }));
-    setIsLoading(false);
-  };
-
-  usePoller(handlePrize, 10000);
-  usePoller(fetchMedia, 10000);
-
-  useEffect(() => {
-    wasStolenFrom();
-  }, [wasStolenFrom]);
+  }, [enableCheckingPrize, getPrizeInfo, whiteElephant]);
 
   return (
     <Box>
@@ -224,28 +151,28 @@ const MainFrame: React.FC = () => {
       </Box>
       <Box style={{ position: "relative" }}>
         {/* <img src={frame} alt="painting frame" /> */}
-        {isLoading && (
+        {isLoadingPrize && (
           <Box style={{ position: "absolute", top: "25%", left: "50%" }}>
             <Spinner />
           </Box>
         )}
-        {myPrize && myPrize.media && (
+        {prize.tokenId !== -1 && prize.media && (
           <img
-            src={URL.createObjectURL(myPrize.media)}
+            src={URL.createObjectURL(prize.media)}
             alt="lol"
             style={{ maxWidth: "300px", maxHeight: "300px" }}
           />
         )}
       </Box>
-      {myPrize && myPrize.nft !== ethers.constants.AddressZero && (
+      {prize.nft !== ethers.constants.AddressZero && prize.tokenId !== -1 && (
         <Box style={{ marginTop: "2em" }}>
-          <Typography>NFT Address: {myPrize.nft}</Typography>
+          <Typography>NFT Address: {prize.nft}</Typography>
           <Typography>
             Token id:{" "}
             <a
-              href={`https://etherscan.io/token/${myPrize.nft}?a=${myPrize.tokenId}`}
+              href={`https://goerli.etherscan.io/token/${prize.nft}?a=${prize.tokenId}`}
             >
-              {myPrize.tokenId}
+              {prize.tokenId}
             </a>
           </Typography>
         </Box>
@@ -257,21 +184,21 @@ const MainFrame: React.FC = () => {
           </Typography>
         )}
         <Box style={{ marginTop: "2em" }}>
-          {stolen && myPrize?.nft === ethers.constants.AddressZero && (
+          {prize.iWasStolenFrom && prize.nft === ethers.constants.AddressZero && (
             <Box>
               <Typography>Oh oh, someone naughty stole from you</Typography>
               <Typography>Go ahead, unwrap or steal</Typography>
               <Typography>Now, noone will be able to steal from you</Typography>
             </Box>
           )}
-          {myPrize?.nft === ethers.constants.AddressZero && (
+          {prize.tokenId === -1 && (
             <Box style={{ marginTop: "2em" }}>
               <UnwrapButton
                 normalUnwrap={unwrap}
                 stolenUnwrap={stolenUnwrap}
                 useStolenUnwrap={
-                  myPrize?.iWasStolenFrom &&
-                  myPrize?.nft === ethers.constants.AddressZero
+                  prize.iWasStolenFrom &&
+                  prize.nft === ethers.constants.AddressZero
                 }
               />
             </Box>
