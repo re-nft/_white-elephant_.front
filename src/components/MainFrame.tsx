@@ -6,7 +6,7 @@ import ContractsContext from "../contexts/Contracts";
 import MeContext from "../contexts/Me";
 import usePoller from "../hooks/Poller";
 
-import Spinner from "./Spinner";
+// import Spinner from "./Spinner";
 
 type Data = {
   address: string;

@@ -89,7 +89,14 @@ const Deposit: React.FC = () => {
         Wise choice, art sensei - the conqueror of creativity
       </Typography>
       <Typography>We have patiently awaited your arrival</Typography>
-      <Typography>🍞🧂</Typography>
+      <Typography>
+        <span role="img" aria-label="bread">
+          🍞
+        </span>
+        <span role="img" aria-label="salt">
+          🧂
+        </span>
+      </Typography>
 
       <Typography style={{ marginTop: "2em" }}>
         Which NFT are you depositing?

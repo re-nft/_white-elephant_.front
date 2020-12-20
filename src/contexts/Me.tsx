@@ -11,7 +11,7 @@ import ContractsContext from "./Contracts";
 import DappContext from "./Dapp";
 import useInterval from "../hooks/Poller";
 import { abis } from "../contracts";
-import { fetchIpfs } from "../api/ipfs";
+// import { fetchIpfs } from "../api/ipfs";
 
 type Prize = {
   nft: string;
@@ -63,7 +63,7 @@ const defaultValue: MeContextT = {
 const MeContext = createContext<MeContextT>(defaultValue);
 
 export const MeContextProvider: React.FC = ({ children }) => {
-  const { isIpfsReady, signer, ipfs } = useContext(DappContext);
+  const { signer } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
   const [ticketNum, setTicketNum] = useState<number>(-1);
   const [ticketPrice, setTicketPrice] = useState<number>(-1);
@@ -89,29 +89,29 @@ export const MeContextProvider: React.FC = ({ children }) => {
     setTicketPrice(Number(price));
   }, [whiteElephant]);
 
-  const fetchMedia = useCallback(
-    async (_prize) => {
-      if (!isIpfsReady || !signer) {
-        console.debug("Ipfs not yet ready");
-        return;
-      }
-      let blob;
-      if (_prize.nft !== ethers.constants.AddressZero) {
-        const nftContract = new ethers.Contract(
-          _prize.nft,
-          abis.erc721,
-          signer
-        );
-        blob = await fetchIpfs({
-          contract: nftContract,
-          tokenId: _prize.tokenId,
-          ipfs,
-        });
-      }
-      return blob;
-    },
-    [ipfs, isIpfsReady, signer]
-  );
+  // const fetchMedia = useCallback(
+  //   async (_prize) => {
+  //     if (!isIpfsReady || !signer) {
+  //       console.debug("Ipfs not yet ready");
+  //       return;
+  //     }
+  //     let blob;
+  //     if (_prize.nft !== ethers.constants.AddressZero) {
+  //       const nftContract = new ethers.Contract(
+  //         _prize.nft,
+  //         abis.erc721,
+  //         signer
+  //       );
+  //       blob = await fetchIpfs({
+  //         contract: nftContract,
+  //         tokenId: _prize.tokenId,
+  //         ipfs,
+  //       });
+  //     }
+  //     return blob;
+  //   },
+  //   [ipfs, isIpfsReady, signer]
+  // );
 
   const shortcutFetchMedia = useCallback(
     async ({ nftAddress, tokenId }) => {
