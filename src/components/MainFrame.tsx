@@ -3,6 +3,7 @@ import { Box, Button, Typography } from "@material-ui/core";
 import { ethers } from "ethers";
 
 import ContractsContext from "../contexts/Contracts";
+import DappContext from "../contexts/Dapp";
 import MeContext from "../contexts/Me";
 import usePoller from "../hooks/Poller";
 
@@ -104,6 +105,7 @@ const Table = () => {
 };
 
 const MainFrame: React.FC = () => {
+  const { address } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
   const { prize, enableCheckingPrize, getPrizeInfo } = useContext(MeContext);
   const [error, setError] = useState<string>("");
@@ -183,7 +185,7 @@ const MainFrame: React.FC = () => {
               <Typography>Now, noone will be able to steal from you</Typography>
             </Box>
           )}
-          {prize.tokenId === -1 && (
+          {prize.tokenId === -1 && address && (
             <Box style={{ marginTop: "2em" }}>
               <UnwrapButton
                 normalUnwrap={unwrap}
