@@ -109,13 +109,18 @@ export const MeContextProvider: React.FC = ({ children }) => {
       console.warn("no contract instance, skipping");
       return;
     }
+    // check if need to force starting to check the prize
+    const nftAddress = await contract.myNftAddress();
+    let tokenId = Number(await contract.myTokenId());
+    if (tokenId !== -1 && nftAddress !== ethers.constants.AddressZero) {
+      // force enable start checking the prize
+      setStartCheckingPrize(true);
+    }
     if (!startCheckingPrize) {
       console.debug("not checking for the prize just yet");
       return;
     }
     setLoadingPrize(true);
-    const nftAddress = await contract.myNftAddress();
-    let tokenId = Number(await contract.myTokenId());
     if (nftAddress === prize.nft && tokenId === prize.tokenId) {
       console.debug("same nft, skipping");
       return;
