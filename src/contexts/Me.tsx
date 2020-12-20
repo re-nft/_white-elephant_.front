@@ -24,10 +24,17 @@ type MeContextT = {
   ticketNum: number;
   ticketPrice: number;
   prize: Prize;
-  isLoadingPrize: boolean;
+  // isLoadingPrize: boolean;
   getTicketInfo: () => Promise<void>;
   getPrizeInfo: () => Promise<void>;
   enableCheckingPrize: () => void;
+  shortcutFetchMedia: ({
+    nftAddress,
+    tokenId,
+  }: {
+    nftAddress: string;
+    tokenId: string;
+  }) => Promise<Blob>;
 };
 
 const defaultValue: MeContextT = {
@@ -42,11 +49,14 @@ const defaultValue: MeContextT = {
     iWasStolenFrom: false,
     media: new Blob(),
   },
-  isLoadingPrize: false,
+  // isLoadingPrize: false,
   getPrizeInfo: async () => {
     throw new Error("must be implemented");
   },
   enableCheckingPrize: () => {
+    throw new Error("must be implemented");
+  },
+  shortcutFetchMedia: () => {
     throw new Error("must be implemented");
   },
 };
@@ -58,7 +68,7 @@ export const MeContextProvider: React.FC = ({ children }) => {
   const [ticketNum, setTicketNum] = useState<number>(-1);
   const [ticketPrice, setTicketPrice] = useState<number>(-1);
   const [prize, setPrize] = useState<MeContextT["prize"]>(defaultValue.prize);
-  const [isLoadingPrize, setLoadingPrize] = useState<boolean>(false);
+  // const [isLoadingPrize, setLoadingPrize] = useState<boolean>(false);
   const [startCheckingPrize, setStartCheckingPrize] = useState<boolean>(false);
 
   // this function will only change if whiteElephant changes
@@ -103,6 +113,38 @@ export const MeContextProvider: React.FC = ({ children }) => {
     [ipfs, isIpfsReady, signer]
   );
 
+  const shortcutFetchMedia = useCallback(
+    async ({ nftAddress, tokenId }) => {
+      const nftContract = new ethers.Contract(nftAddress, abis.erc721, signer);
+      // todo: need to support uri as well
+      const tokenUri: string = await nftContract.tokenURI(tokenId);
+      if (!tokenUri.startsWith("http")) {
+        console.error("tokenUri does not start with http");
+        return;
+      }
+      const meta = await (await fetch(tokenUri)).json();
+      // for rarible minted NFTs, we can fetch from their ipfs node that is served over http
+      // for others will add support as we go
+      if (!("external_url" in meta)) {
+        console.warn("not rarible minted NFT, probably won't fetch the image");
+      }
+      // image url
+      let imageUrl: string;
+      const _imageUrl = meta.image;
+      if (_imageUrl.startsWith("ipfs://ipfs/")) {
+        imageUrl = _imageUrl.substr("ipfs://ipfs/".length);
+      } else if (_imageUrl.startsWith("http")) {
+        // good chance this is an http image
+        imageUrl = _imageUrl;
+      }
+      const baseUrl = `https://ipfs.rarible.com/ipfs/${imageUrl}`;
+      const response = await fetch(baseUrl);
+      const blob = await response.blob();
+      return blob;
+    },
+    [signer]
+  );
+
   const getPrizeInfo = useCallback(async () => {
     const { contract } = whiteElephant;
     if (!contract) {
@@ -120,13 +162,14 @@ export const MeContextProvider: React.FC = ({ children }) => {
       console.debug("not checking for the prize just yet");
       return;
     }
-    setLoadingPrize(true);
+    // setLoadingPrize(true);
     if (nftAddress === prize.nft && tokenId === prize.tokenId) {
       console.debug("same nft, skipping");
       return;
     }
     let iWasStolenFrom = await contract.myStolenFrom();
-    const blob = await fetchMedia({ nft: nftAddress, tokenId });
+    // const blob = await fetchMedia({ nft: nftAddress, tokenId });
+    const blob = await shortcutFetchMedia({ nftAddress, tokenId });
     const _prize = {
       nft: nftAddress,
       tokenId,
@@ -134,15 +177,21 @@ export const MeContextProvider: React.FC = ({ children }) => {
       media: blob,
     };
     setPrize(_prize);
-    setLoadingPrize(false);
-  }, [fetchMedia, prize.nft, prize.tokenId, startCheckingPrize, whiteElephant]);
+    // setLoadingPrize(false);
+  }, [
+    prize.nft,
+    prize.tokenId,
+    startCheckingPrize,
+    whiteElephant,
+    shortcutFetchMedia,
+  ]);
 
   const enableCheckingPrize = () => {
     setStartCheckingPrize(true);
   };
 
-  useInterval(getTicketInfo, 30_000);
-  useInterval(getPrizeInfo, 30_000);
+  useInterval(getTicketInfo, 3_000);
+  useInterval(getPrizeInfo, 3_000);
 
   // and fetch these for the first time immediately without waiting
   // for the poller
@@ -158,8 +207,9 @@ export const MeContextProvider: React.FC = ({ children }) => {
         getTicketInfo,
         prize,
         enableCheckingPrize,
-        isLoadingPrize,
+        // isLoadingPrize,
         getPrizeInfo,
+        shortcutFetchMedia,
       }}
     >
       {children}

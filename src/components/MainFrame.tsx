@@ -105,12 +105,7 @@ const Table = () => {
 
 const MainFrame: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
-  const {
-    prize,
-    isLoadingPrize,
-    enableCheckingPrize,
-    getPrizeInfo,
-  } = useContext(MeContext);
+  const { prize, enableCheckingPrize, getPrizeInfo } = useContext(MeContext);
   const [error, setError] = useState<string>("");
 
   const unwrap = useCallback(async () => {
@@ -148,11 +143,11 @@ const MainFrame: React.FC = () => {
       </Box>
       <Box style={{ position: "relative" }}>
         {/* <img src={frame} alt="painting frame" /> */}
-        {isLoadingPrize && (
+        {/* {isLoadingPrize && (
           <Box style={{ position: "absolute", top: "25%", left: "50%" }}>
             <Spinner />
           </Box>
-        )}
+        )} */}
         {prize.tokenId !== -1 && prize.media && (
           <img
             src={URL.createObjectURL(prize.media)}

@@ -4,14 +4,14 @@ import { Button, Box, Typography } from "@material-ui/core";
 import usePoller from "../hooks/Poller";
 import ContractsContext from "../contexts/Contracts";
 import DappContext from "../contexts/Dapp";
+import MeContext from "../contexts/Me";
 import { ethers } from "ethers";
 
-// todo: ipfs pull
 type StealT = {
   currOwner: string;
   nftAddress: string;
   tokenId: number;
-  // todo: add image / animation url
+  media: Blob;
 };
 
 type StealButtonProps = {
@@ -34,6 +34,7 @@ const StealButton: React.FC<StealButtonProps> = ({ onSteal, from }) => {
 const Steal = () => {
   const { address } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
+  const { shortcutFetchMedia } = useContext(MeContext);
   const [available, setAvailable] = useState<StealT[]>([]);
   const [, setError] = useState<string>("");
 
@@ -56,7 +57,16 @@ const Steal = () => {
         player
       );
 
-      // todo: add image resolving here
+      const resolvedNft = String(nft);
+      const resolvedId = String(tokenId);
+
+      let blob = await shortcutFetchMedia({
+        nftAddress: resolvedNft,
+        tokenId: resolvedId,
+      });
+
+      if (!blob) blob = new Blob();
+
       if (
         !wasStolenFrom &&
         nft !== ethers.constants.AddressZero &&
@@ -66,12 +76,13 @@ const Steal = () => {
           currOwner: player,
           nftAddress: nft,
           tokenId: tokenId.toNumber(),
+          media: blob,
         });
       }
     }
 
     setAvailable(stealFrom);
-  }, [whiteElephant, address]);
+  }, [whiteElephant, address, shortcutFetchMedia]);
 
   const stealNft = useCallback(
     async (currOwner: string) => {
@@ -102,8 +113,14 @@ const Steal = () => {
               key={`${a.nftAddress}::${a.tokenId}`}
               style={{ display: "flex", flexDirection: "column" }}
             >
-              {/* <img src={frame} alt="painting frame" /> */}
               <Box style={{ marginTop: "2em" }}>
+                <Box>
+                  <img
+                    src={URL.createObjectURL(a.media)}
+                    alt="nft"
+                    style={{ maxWidth: "300px", maxHeight: "300px" }}
+                  />
+                </Box>
                 <Typography>Current owner: {a.currOwner}</Typography>
                 <Typography>NFT Address: {a.nftAddress}</Typography>
                 <Typography>Token ID: {a.tokenId}</Typography>

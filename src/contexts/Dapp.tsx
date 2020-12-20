@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import { addresses as _addresses, abis as _abis } from "../contracts/index";
 import useIpfsFactory from "../hooks/use-ipfs-factory";
 import useIpfs from "../hooks/use-ipfs";
+// import useInterval from "../hooks/Poller";
 
 type addresses = {
   whiteElephant: string;
@@ -56,11 +57,13 @@ export const DappContextProvider: React.FC = ({ children }) => {
   const [abis, setAbis] = useState<DappContextType["abis"]>(
     DefaultDappContext.abis
   );
+  // const [windowSelectedAccount, setSelectedAccount] = useState<string>("");
 
   const getAddress = useCallback(async () => {
     if (!signer) return;
     const _address = await signer.getAddress();
     setAddress(_address);
+    //@ts-ignore
   }, [signer]);
 
   const getNetwork = useCallback(async () => {
@@ -74,6 +77,7 @@ export const DappContextProvider: React.FC = ({ children }) => {
     setNetwork(__network);
   }, [provider]);
 
+  // * not tracking the network change
   const getAddressesAndAbis = useCallback(async () => {
     if (!network) {
       console.warn("can't identify the network");
@@ -105,11 +109,28 @@ export const DappContextProvider: React.FC = ({ children }) => {
     setSigner(_signer);
   }, []);
 
+  // const handleSelectedAcconut = useCallback(() => {
+  // console.debug(
+  //   "currently selected metamask account",
+  //   //@ts-ignore
+  //   window?.ethereum?.selectedAccount
+  // );
+  //@ts-ignore
+  // setSelectedAccount(window?.ethereum?.selectedAccount || "");
+  // }, []);
+
   useEffect(() => {
     getAddress();
     getNetwork();
     getAddressesAndAbis();
   }, [getAddress, getNetwork, getAddressesAndAbis]);
+
+  // useEffect(() => {
+  //   if (address !== windowSelectedAccount) connect();
+  // }, [connect, windowSelectedAccount, address]);
+
+  // todo: there is got to be a better solution
+  // useInterval(handleSelectedAcconut, 2000);
 
   return (
     <DappContext.Provider
