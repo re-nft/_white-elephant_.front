@@ -7,14 +7,16 @@ import MainFrame from "./components/MainFrame";
 import Intro from "./components/Intro";
 import Deposit from "./components/Deposit";
 import Footer from "./components/Footer";
+import Header from "./components/Header";
 
 function App() {
   return (
     <Router>
       <Switch>
         <Route exact path="/">
+          <Header />
           <Box>
-            <Box style={{ marginLeft: "1em" }}>
+            <Box style={{ marginLeft: "2em" }}>
               powered by brainz @{" "}
               <Box className="Header__title" data-text="reNFT">
                 <a href="https://twitter.com/renftlabs" data-text="reNFT">
@@ -23,9 +25,6 @@ function App() {
               </Box>
             </Box>
           </Box>
-          {/* <Box style={{ textAlign: "center" }}>
-            <Typography variant="h4">White Elephant ho ho ho</Typography>
-          </Box> */}
           <Box
             style={{
               display: "flex",

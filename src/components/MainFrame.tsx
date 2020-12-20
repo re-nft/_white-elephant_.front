@@ -4,7 +4,6 @@ import { ethers } from "ethers";
 
 import ContractsContext from "../contexts/Contracts";
 import MeContext from "../contexts/Me";
-// import frame from "../public/img/frame.png";
 import usePoller from "../hooks/Poller";
 
 import Spinner from "./Spinner";
@@ -13,8 +12,6 @@ type Data = {
   address: string;
   order: number;
 };
-
-type Optional<T> = T | undefined | null;
 
 type UnwrapButtonProps = {
   normalUnwrap: () => Promise<void>;
@@ -49,62 +46,60 @@ const Table = () => {
   const handleData = useCallback(async () => {
     const { contract } = whiteElephant;
     if (!contract) return;
-
     const totalNumPlayers = await contract.numberOfPlayers();
-
     const allPlayers: Data[] = [];
     for (let i = 0; i < totalNumPlayers; i++) {
       const player = await contract.getPlayerNumber(i);
       allPlayers.push({ address: player, order: i + 1 });
     }
-
-    setData(allPlayers);
-  }, [whiteElephant]);
-
-  const handleTurn = useCallback(async () => {
-    const { contract } = whiteElephant;
-    if (!contract) return;
-
     const __currTurn = await contract.currNftToUnwrap();
     let _currTurn = -1;
     try {
       _currTurn = Number(__currTurn);
     } catch (err) {
-      console.warn("could not get my order number");
+      console.warn("can't turn my order num to Number type");
     }
-
     setCurrTurn(_currTurn);
+    setData(allPlayers);
   }, [whiteElephant]);
 
-  const handleTableData = useCallback(async () => {
-    await Promise.all([handleData(), handleTurn()]);
-  }, [handleData, handleTurn]);
-
-  usePoller(handleTableData, 3000);
+  usePoller(handleData, 3000);
 
   if (data.length < 1) return <></>;
 
   return (
-    <table style={{ margin: "auto" }}>
-      <thead>
-        <tr>
-          <th>Address</th>
-          <th>Turn</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data &&
-          data.map((d) => (
-            <tr
-              key={`${d.address}::${d.order}`}
-              style={{ background: currTurn === d.order - 1 ? "green" : "" }}
-            >
-              <td>{d.address}</td>
-              <td>{d.order}</td>
-            </tr>
-          ))}
-      </tbody>
-    </table>
+    <Box>
+      <Typography
+        variant="h6"
+        style={{ fontWeight: "bold", marginBottom: "1em" }}
+      >
+        There shall-eth be order-eth
+      </Typography>
+      <Typography variant="caption">
+        On Christmas day, take turns and unwrap or steal the presents. The
+        higlighted address takes turn now
+      </Typography>
+      <table style={{ margin: "auto" }}>
+        <thead>
+          <tr>
+            <th>Player Address</th>
+            <th>Their Turn #</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data &&
+            data.map((d) => (
+              <tr
+                key={`${d.address}::${d.order}`}
+                style={{ background: currTurn === d.order - 1 ? "green" : "" }}
+              >
+                <td>{d.address}</td>
+                <td>{d.order}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </Box>
   );
 };
 
@@ -147,7 +142,9 @@ const MainFrame: React.FC = () => {
   return (
     <Box>
       <Box style={{ marginBottom: "4em" }}>
-        <Typography variant="h2">Thy Prize</Typography>
+        <Typography variant="h3">
+          Thy Prize {prize.tokenId === -1 && "shall-eth be here-eth"}
+        </Typography>
       </Box>
       <Box style={{ position: "relative" }}>
         {/* <img src={frame} alt="painting frame" /> */}
@@ -206,9 +203,6 @@ const MainFrame: React.FC = () => {
         </Box>
       </Box>
       <Box style={{ marginTop: "4em", textAlign: "center" }}>
-        <Typography variant="h6" style={{ fontWeight: "bold" }}>
-          There shall-eth be order-eth
-        </Typography>
         <Box style={{ margin: "2em" }}>
           <Table />
         </Box>

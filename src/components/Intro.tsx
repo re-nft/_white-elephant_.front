@@ -23,7 +23,7 @@ const Intro: React.FC = () => {
         alignItems: "space-around",
       }}
     >
-      <Box style={{ marginBottom: "1em" }}>
+      <Box style={{ marginBottom: "2em" }}>
         {!address && (
           <Button onClick={connect} variant="outlined">
             Connect Wallet
@@ -49,12 +49,22 @@ const Intro: React.FC = () => {
           flexDirection: "column",
         }}
       >
-        <h1>Rules</h1>
+        <h1 style={{ marginBottom: "1em" }}>Rules</h1>
         <ul>
           <li>1. Single ticket per unique address</li>
           <li>2. On Christmas day, take turns to unwrap or steal</li>
           <li>3. By the end of the event, presents get delivered by Santa</li>
-          <li>Ho ho ho, with ❤️ reNFT Labs</li>
+          <li>
+            4. Player whose turn it is has 1 day to unwrap. If they do not
+            unwrap or steal in time, a random NFT is assigned to them
+          </li>
+          <li style={{ marginTop: "1em" }}>
+            Ho ho ho, with{" "}
+            <span role="img" aria-label="heart">
+              ❤️
+            </span>{" "}
+            reNFT Labs
+          </li>
         </ul>
       </Box>
       <Ticket />

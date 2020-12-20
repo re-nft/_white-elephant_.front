@@ -91,7 +91,6 @@ export const DappContextProvider: React.FC = ({ children }) => {
       console.warn("MetaMask is not installed!");
       return;
     }
-
     try {
       //@ts-ignore
       window?.ethereum.enable();
@@ -99,12 +98,9 @@ export const DappContextProvider: React.FC = ({ children }) => {
       console.error("could not establish connection with MetaMask");
       return;
     }
-
     //@ts-ignore
     const _provider = new ethers.providers.Web3Provider(window?.ethereum);
-
     setProvider(_provider);
-
     const _signer = _provider.getSigner();
     setSigner(_signer);
   }, []);

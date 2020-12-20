@@ -3,14 +3,22 @@ import { Box, Typography } from "@material-ui/core";
 
 export default function Footer() {
   return (
-    <Box>
+    <Box style={{ marginLeft: "2em" }}>
       <Typography>
-        Feel free to support us by donating to reNFT multi-sig:{" "}
+        If you have the itch to support us, here is our{" "}
         <span style={{ fontWeight: "bold" }}>
-          <a href="https://etherscan.io/address/0x28f11c3D76169361D22D8aE53551827Ac03360B0">
-            0x28f11c3D76169361D22D8aE53551827Ac03360B0
+          <a
+            href="https://etherscan.io/address/0x28f11c3D76169361D22D8aE53551827Ac03360B0"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            multi-sig
           </a>
         </span>
+        , infinite gratitude{" "}
+        <span role="img" aria-label="heart">
+          ❤️
+        </span>{" "}
       </Typography>
     </Box>
   );
