@@ -115,8 +115,17 @@ export const MeContextProvider: React.FC = ({ children }) => {
 
   const shortcutFetchMedia = useCallback(
     async ({ nftAddress, tokenId }) => {
+      if (!tokenId || !nftAddress) {
+        console.warn("attempting to fetch with no address or tokenId");
+        return new Blob();
+      }
+      if (nftAddress === ethers.constants.AddressZero) {
+        console.warn("attempting to fetch with zeroAddress");
+        return new Blob();
+      }
       const nftContract = new ethers.Contract(nftAddress, abis.erc721, signer);
       // todo: need to support uri as well
+      console.debug("fetching tokenURI with", nftAddress, "and", tokenId);
       const tokenUri: string = await nftContract.tokenURI(tokenId);
       if (!tokenUri.startsWith("http")) {
         console.error("tokenUri does not start with http");
