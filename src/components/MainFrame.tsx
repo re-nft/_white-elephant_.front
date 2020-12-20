@@ -107,7 +107,9 @@ const Table = () => {
 const MainFrame: React.FC = () => {
   const { address } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
-  const { prize, enableCheckingPrize, getPrizeInfo } = useContext(MeContext);
+  const { prize, enableCheckingPrize, getPrizeInfo, ticketNum } = useContext(
+    MeContext
+  );
   const [error, setError] = useState<string>("");
 
   const unwrap = useCallback(async () => {
@@ -185,7 +187,7 @@ const MainFrame: React.FC = () => {
               <Typography>Now, noone will be able to steal from you</Typography>
             </Box>
           )}
-          {prize.tokenId === -1 && address && (
+          {prize.tokenId === -1 && address && ticketNum > 0 && (
             <Box style={{ marginTop: "2em" }}>
               <UnwrapButton
                 normalUnwrap={unwrap}
