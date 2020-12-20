@@ -2,9 +2,10 @@
 pragma solidity ^0.7.6;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract WhiteElephant is Ownable {
+contract WhiteElephant is Ownable, ERC721Holder {
     struct Info {
         address nft;
         uint256 tokenId;
@@ -57,11 +58,6 @@ contract WhiteElephant is Ownable {
         players.push(msg.sender);
     }
 
-    // todo: people may just randomly send us ERC721s to this contract
-    // this will not participate in the game. Only the ones that have been
-    // send properly like the below will participate in the game
-    // todo: ensure that on event end whatever is left behind in  terms
-    // of ERC20s or ERC721s gets transfered to the creator of this contract
     function depositNft(ERC721 _nft, uint256 _tokenId) public {
         _nft.transferFrom(msg.sender, address(this), _tokenId);
         allNfts.push(Nft(_nft, _tokenId));
@@ -111,6 +107,16 @@ contract WhiteElephant is Ownable {
         // todo: chainlink
         player.nft = address(allNfts[currNftToUnwrap].nft);
         player.tokenId = allNfts[currNftToUnwrap].tokenId;
+    }
+
+    // forbid people to just send ERC721s to us with safeTransfer calls
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public override returns (bytes4) {
+        revert("deposit the NFTs with reNFT front");
     }
 
     // info related --=
