@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
+pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
-contract WhiteElephant is Ownable, ERC721Holder {
+contract WhiteElephant is Ownable, ERC721Holder, VRFConsumerBase {
     struct Info {
         address nft;
         uint256 tokenId;
@@ -31,6 +32,10 @@ contract WhiteElephant is Ownable, ERC721Holder {
     address[] public players;
     Nft[] public allNfts;
 
+    bytes32 internal keyHash;
+    uint256 internal fee;
+    uint256 public randomResult;
+
     modifier yourOrder(address _sender) {
         require(info[_sender].orderNum == currNftToUnwrap + 1, "not your turn");
         _;
@@ -40,6 +45,49 @@ contract WhiteElephant is Ownable, ERC721Holder {
         // todo: find the Christmas block number;
         require(block.number >= 1, "wait for Christmas");
         _;
+    }
+
+    /**
+     * Constructor inherits VRFConsumerBase
+     *
+     * Network: Kovan
+     * Chainlink VRF Coordinator address: 0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9
+     * LINK token address:                0xa36085F69e2889c224210F603D836748e7dC0088
+     * Key Hash: 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4
+     */
+    constructor()
+        public
+        VRFConsumerBase(
+            0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9, // VRF Coordinator
+            0xa36085F69e2889c224210F603D836748e7dC0088 // LINK Token
+        )
+    {
+        keyHash = 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4;
+        fee = 0.1 * 10**18; // 0.1 LINK
+    }
+
+    /**
+     * Requests randomness from a user-provided seed
+     */
+    function getRandomNumber(uint256 userProvidedSeed)
+        public
+        returns (bytes32 requestId)
+    {
+        require(
+            LINK.balanceOf(address(this)) >= fee,
+            "Not enough LINK - fill contract with faucet"
+        );
+        return requestRandomness(keyHash, fee, userProvidedSeed);
+    }
+
+    /**
+     * Callback function used by VRF Coordinator
+     */
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
+        randomResult = randomness;
     }
 
     function buyTicket() public payable {
@@ -109,6 +157,7 @@ contract WhiteElephant is Ownable, ERC721Holder {
         player.tokenId = allNfts[currNftToUnwrap].tokenId;
     }
 
+    // todo: test this
     // forbid people to just send ERC721s to us with safeTransfer calls
     function onERC721Received(
         address,
@@ -197,6 +246,7 @@ contract WhiteElephant is Ownable, ERC721Holder {
         return players[_number];
     }
 
+    // todo: test this
     function endEvent() public onChristmas {
         for (uint256 i = 0; i < players.length; i++) {
             Info storage player = info[players[i]];
