@@ -3,13 +3,20 @@ pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
-contract WhiteElephant is Ownable, ERC721Holder, VRFConsumerBase {
+contract WhiteElephant is
+    Ownable,
+    ERC721Holder,
+    VRFConsumerBase,
+    ReentrancyGuard
+{
     struct Info {
         address nft;
         uint256 tokenId;
+        bytes32 randomnessRequestId;
         uint16 orderNum;
         bool hasTicket;
         bool wasStolenFrom;
@@ -34,16 +41,29 @@ contract WhiteElephant is Ownable, ERC721Holder, VRFConsumerBase {
 
     bytes32 internal keyHash;
     uint256 internal fee;
-    uint256 public randomResult;
 
-    modifier yourOrder(address _sender) {
-        require(info[_sender].orderNum == currNftToUnwrap + 1, "not your turn");
+    // requestId => randomness
+    mapping(uint256 => uint256) public entropy;
+    // on Christmas day, someone must call a function to order
+    // the Chainlink randomness. The below is the result of that.
+    // If there are 42 players, then each requestId will be mapped
+    // to the relative order number. i.e. from 1 to 42 inclusive.
+    mapping(uint256 => uint256) public order;
+    // this variable is used to signify whose turn it currently is
+    uint256 public turnNum;
+
+    uint256 internal christmasBlockNum = 1;
+
+    modifier yourTurn(address _sender) {
+        uint256 sendersRequestId = info[_sender].randomnessRequestId;
+        uint256 sendersTurnNum = order[sendersRequestId];
+        require(sendersTurnNum == turnNum, "not your turn");
         _;
     }
 
     modifier onChristmas() {
-        // todo: find the Christmas block number;
-        require(block.number >= 1, "wait for Christmas");
+        // todo;
+        require(block.number >= christmasBlockNum, "wait for Christmas");
         _;
     }
 
@@ -66,18 +86,60 @@ contract WhiteElephant is Ownable, ERC721Holder, VRFConsumerBase {
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
+    // foreseable that someone may try to game this by calling this
+    // as soon as they see a transaction pending to buy ticket.
+    // or if someone was stolen from. How do I get rid of front-running here?
+    // This function is not a problem on the initial ticket buy.
+    // It certainly is when someone steals from someone. The party that is stolen
+    // from will need to draw a random number again. The new number cannot be
+    // based on the original randomness, and it cannot be offchain. Because then
+    // the user can keep generating the RN until he gets the NFT that he wants
+    // by rejecting the transactions that are not "suitable". We must perform
+    // another Chainlink fetch. That, however, implies that someone else can
+    // be front-running the user that was stolen from by calling getRandomNumber
+    // to make so that the user gets a number that will yield a lower quality
+    // NFT. This is only possible if the hijacker somehow uncracked chainlink's
+    // randomness generation. I am making a big assumption here, that Chainlink's
+    // randomness is truly random and so hijacking the user will yield to nada.
+    // This then means that no front-running safeguards are required. We can
+    // ensure that randomness is used by the user that has generated it, though!
+    // This can be done, by adding the address that has last generated the randomness
+    // and requiring that the randomness last generated be consumed by the generator.
+    // Need to ensure that such randomness is not being consumes more than once
+    // by the generator. This can be avoided by resetting the randomness, whenever
+    // it is being consumed by the producer.
+    // Even better, let someone buy the ticket, and then mark a flag that they are yet
+    // to generate randomness for themselves. And so if someone tries to front-run this
+    // person, then they must have a ticket themselves, otherwise they are not allowed
+    // to generate the randomness. If they have a ticket and they have generated the
+    // randomness, then they will get a revert. This way only ticket holders can generate
+    // the randomness. In fact, the flag can be simply the randomness attribute. If it is
+    // the default value i.e. 0, and the player has ticket, then they can request the
+    // generation of the random number. Otherwise, they can't. In that sense, only the
+    // people who have bought the ticket can "front-run". Even then, they do not know
+    // the source of Chainlink's randomness. This however, will ensure that our contract's
+    // LINK is only ever spent by the people who actually bought the ticket to participate.
+    // Lol, so much thought and the solution is simple: make random generation internal
+    // function, and call on ticket buying which should be non-reentrant.
     /**
      * Requests randomness from a user-provided seed
      */
-    function getRandomNumber(uint256 userProvidedSeed)
-        public
+    function getRandomNumber(uint256 _userProvidedSeed)
+        internal
         returns (bytes32 requestId)
     {
+        Info storage player = info[msg.sender];
+        // todo: this requires resetting the randomness when it is being consumed
+        // unwrap after stolen mustn't reset. Because each player is only ever allowed
+        // to unwrap twice at most.
         require(
-            LINK.balanceOf(address(this)) >= fee,
-            "Not enough LINK - fill contract with faucet"
+            player.randomnessRequestId == 0,
+            "cant generate more than once"
         );
-        return requestRandomness(keyHash, fee, userProvidedSeed);
+        require(LINK.balanceOf(address(this)) >= fee, "not enough LINK");
+        requestId = requestRandomness(keyHash, fee, _userProvidedSeed);
+        player.randomnessRequestId = requestId;
+        return requestId;
     }
 
     /**
@@ -90,19 +152,15 @@ contract WhiteElephant is Ownable, ERC721Holder, VRFConsumerBase {
         randomResult = randomness;
     }
 
-    function buyTicket() public payable {
+    function buyTicket(uint256 _userProvidedSeed) public payable nonReentrant {
         require(msg.value >= ticketPrice, "you are sending incorrect amount");
         require(
             info[msg.sender].exists == false,
             "only one ticket per address"
         );
-
+        getRandomNumber(_userProvidedSeed);
         info[msg.sender].hasTicket = true;
         info[msg.sender].exists = true;
-        info[msg.sender].orderNum = orderNum;
-
-        orderNum++;
-
         players.push(msg.sender);
     }
 
@@ -142,42 +200,24 @@ contract WhiteElephant is Ownable, ERC721Holder, VRFConsumerBase {
     // 2 ** 5 + 2 ** 3 + 2 ** 1: 10110.
     // this is equivalent to finding the log of base 2
     // lb(42) = 5.39. i.e. we need 6 bits to express 42
+    // *** in fact the above is not neccessary. It is possible to simplify the process
+    // considerably. By simply storing the Chainlink randomness and on the day of Christmas
+    // New Year determine the order of the players. When someone steals from someone
+    // a random implementation that uses previously generated randomness will be used
+    // which unwrapped NFT will go to the player who will unwrap after steal.
     function depositNft(ERC721 _nft, uint256 _tokenId) public {
         _nft.transferFrom(msg.sender, address(this), _tokenId);
         allNfts.push(Nft(_nft, _tokenId));
     }
 
-    function stealNft(address _theirAddress)
-        public
-        yourOrder(msg.sender)
-        onChristmas
-    {
+    function unwrap() public yourTurn(msg.sender) onChristmas {
         Info storage player = info[msg.sender];
-        Info storage them = info[_theirAddress];
-
-        require(them.exists == true);
-        require(player.orderNum > them.orderNum, "cant steal from them");
-        require(them.wasStolenFrom == false, "cant steal from them again");
-
-        player.nft = info[_theirAddress].nft;
-        player.tokenId = info[_theirAddress].tokenId;
-
-        them.wasStolenFrom = true;
-        them.nft = address(0);
-        them.tokenId = 0;
-
-        currNftToUnwrap++;
-    }
-
-    function unwrap() public yourOrder(msg.sender) onChristmas {
-        Info storage player = info[msg.sender];
-
         player.nft = address(allNfts[currNftToUnwrap].nft);
         player.tokenId = allNfts[currNftToUnwrap].tokenId;
-
-        currNftToUnwrap++;
+        turnNum++;
     }
 
+    // turnNum is not incremented. This can be done at any point
     function unwrapAfterSteal() public onChristmas {
         Info storage player = info[msg.sender];
 
@@ -193,8 +233,38 @@ contract WhiteElephant is Ownable, ERC721Holder, VRFConsumerBase {
         player.tokenId = allNfts[currNftToUnwrap].tokenId;
     }
 
+    function stealNft(address _theirAddress)
+        public
+        yourTurn(msg.sender)
+        onChristmas
+    {
+        Info storage player = info[msg.sender];
+        Info storage them = info[_theirAddress];
+        require(them.exists == true);
+        require(them.wasStolenFrom == false, "cant steal from them again");
+        // * player's turn must be after the stolen from turn
+        require(
+            entropy[player.randomnessRequestId] >
+                entropy[them.randomnessRequestId],
+            "cant steal from them"
+        );
+        player.nft = info[_theirAddress].nft;
+        player.tokenId = info[_theirAddress].tokenId;
+        them.wasStolenFrom = true;
+        them.nft = address(0);
+        them.tokenId = 0;
+        // reset their randomnessRequestId so that they can generate new randomness
+        // when they unwrap again for the last time (or steal themselves)
+        // if their randomnessRequest is zero, but nft address is non zero -
+        // they have stolen themselves. And can no longer unwrap or be stolen from
+        // this is final
+        them.randomnessRequestId = 0;
+        turnNum++;
+    }
+
     // todo: test this
     // forbid people to just send ERC721s to us with safeTransfer calls
+    // todo: what happens to the nfts sent without the safeTransfer call?
     function onERC721Received(
         address,
         address,
