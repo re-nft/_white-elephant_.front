@@ -106,6 +106,42 @@ contract WhiteElephant is Ownable, ERC721Holder, VRFConsumerBase {
         players.push(msg.sender);
     }
 
+    // can only deposit before christmas block.number
+    // after that we know exactly how many players are taking part
+    // that will be the length of the players array.
+    // we need to fix the number of players after that point
+    // to safely generate random numbers and assign the winners.
+    // It is possible to map any interval [a, b] to an interval
+    // [c, d] where all are real numbers. This is because intervals
+    // are equivalent in set theoretic terms. Now this implies that
+    // no matter the size of the generated random number, we can
+    // put it in an equivalence relation with the set of the random
+    // numbers (which we want) whose upper boundary is the total
+    // number of players minus one. This is trivially achieved by looking
+    // at the sections of the generated random number.
+    // Proof by contradiction:
+    // Suppose that the last 2 digit truncation of uint256 randomness is
+    // not uniformly distributed. That would mean that numbers with a certain
+    // ending ared to turn up more often. For example, numbers with
+    // endings 1, but that would mean that other numbers are less likely
+    // to turn up. So endings are not uniformly distributed and that implies
+    // that the randomness source does not sample uniformly. Which contradicts
+    // the premise that the source is uniformly random. And so if the source
+    // is uniformly random then that must mean that so is truncation.
+    // This implies that if we want to generate a random number where the
+    // upper boundary is the number of players, we just need to truncate
+    // the randomness. If the NFt is not available, take next closest one
+    // Implementation
+    // Reqruire a function that takes a uint256, e.g. 21 players
+    // and gives us the number of the last few bits we have to
+    // look at for our truncated number. For example, suppose
+    // that the number of players is 42, then we must look at
+    // 2 ** 0 + 2 ** 1 + 2 ** 2 + 2 ** 3 + 2 ** 4 + 2 ** 5
+    // 1 + 2 + 4 + 8 + 16 + 32 = 31 + 32 = 63
+    // i.e. the last 5 bits, because we can construct 42 like so:
+    // 2 ** 5 + 2 ** 3 + 2 ** 1: 10110.
+    // this is equivalent to finding the log of base 2
+    // lb(42) = 5.39. i.e. we need 6 bits to express 42
     function depositNft(ERC721 _nft, uint256 _tokenId) public {
         _nft.transferFrom(msg.sender, address(this), _tokenId);
         allNfts.push(Nft(_nft, _tokenId));
