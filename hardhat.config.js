@@ -59,6 +59,13 @@ module.exports = {
           "spoon mouse pupil sail verify message seat cross setup stumble park dentist",
       },
     },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,
+      accounts: {
+        mnemonic:
+          "spoon mouse pupil sail verify message seat cross setup stumble park dentist",
+      },
+    },
     xdai: {
       url: "https://dai.poa.network",
       gasPrice: 1000000000,

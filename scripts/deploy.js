@@ -9,11 +9,13 @@ const WRITE_PATH = path.join(
   "addresses.ts"
 );
 
+// useLess - pan intended - pun intended 2x there!
 const addressesTemplate = ({
   localhost = "",
   hardhat = "",
   goerli = "",
   homestead = "",
+  kovan = "",
 }) => {
   return `const addresses = {
   localhost: {
@@ -28,6 +30,9 @@ const addressesTemplate = ({
   homestead: {
     whiteElephant: "${homestead}",
   },
+  kovan: {
+    whiteElephant: "${kovan}",
+  }
 };
 export default addresses;`;
 };
