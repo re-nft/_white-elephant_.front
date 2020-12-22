@@ -37,7 +37,7 @@ contract WhiteElephant is
     // 0 signifies no ticket number. i.e. you have not bought the ticket
     uint16 public orderNum = 1;
     uint16 public currNftToUnwrap = 0;
-    uint256 public ticketPrice = 0.1 ether;
+    uint256 public ticketPrice = 0.001 ether;
 
     address[] public players;
     Nft[] public allNfts;
@@ -49,17 +49,34 @@ contract WhiteElephant is
     mapping(bytes32 => uint256) public entropy;
     // this variable is used to signify whose turn it currently is
     address public playersTurn;
+    // each player has this much time to to unwrap.
+    // this is in seconds
+    uint256 unwrapIn = 120;
+    // * todo
+    // 2020-12-25 is 1608854400
+    uint256 public christmasTimestamp = 1;
+    // denotes the timestamp at which the last unwrap / steal took place
+    uint256 lastActionTime = christmasTimestamp;
 
-    uint256 internal christmasBlockNum = 1;
-
-    modifier yourTurn(address _sender) {
-        require(_sender == playersTurn, "not your turn");
-        _;
-    }
+    // this check that it is your turn
+    // if it is not but the previous player / players
+    // have exceeded the deadline by which they should
+    // have unwrapped, you can unwrap!
+    // If the person knows which NFT they get, it is in
+    // their interest to avoid unwrapping. Because then,
+    // noone can steal from them. This implies that
+    // we must make the player forefeit their ticket
+    // if they do not unwrap on time. Creates an incentive
+    // to unwrap, because if they do not, they will lose their
+    // ticket price.
+    // modifier yourTurn(address _sender) {
+    //     require(_sender == playersTurn, "not your turn");
+    //     _;
+    // }
 
     modifier onChristmas() {
         // todo;
-        require(block.number >= christmasBlockNum, "wait for Christmas");
+        require(block.timestamp >= christmasTimestamp, "wait for Christmas");
         _;
     }
 
@@ -213,10 +230,9 @@ contract WhiteElephant is
     // If they yet steal from someone else, then we once again
     // transfer their randomness. This way everyone will always have
     // an NFT to unwrap
-    function unwrap(address[] calldata order)
+    function unwrap(address[] calldata order, address[] calldata redro)
         external
         nonReentrant
-        yourTurn(msg.sender)
         onChristmas
     {
         Info storage player = info[msg.sender];
@@ -225,10 +241,56 @@ contract WhiteElephant is
         // ourselves on-chain
         (uint256 myOrder, address nextPlayer) =
             ensureOrder(order, player.randomnessRequestId, false);
+        // miners can manipulate for up to 900 seconds
+        // now determine if unwrap is on time
+        uint256 deadline = lastActionTime + unwrapIn;
+        uint256 currTime = block.timestamp;
+        uint256 missedUnwrap = 1;
+        // someone forgot to unwrap
+        if (currTime > deadline) {
+            // let's determine if it is singular or plural
+            while (currTime > deadline) {
+                deadline += unwrapIn;
+                missedUnwrap += 1;
+            }
+            // if deadline == currTime, then the player
+            // has missed their chance to unwrap and the
+            // currently unwrapping address did it as
+            // early as they could.
+            // If however, we overflow, then it must be the
+            // new players turn and so deduct one.
+            if (deadline > currTime) {
+                missedUnwrap -= 1;
+            }
+            // now let's determine if our checks are valid
+            // if they are not, there is something super frigging wrong
+            bool startDecrement;
+            address expectedCurr;
+            // loop through the reverse sorted array
+            for (uint256 i = 0; i < players.length; i++) {
+                if (missedUnwrap == 0) {
+                    expectedCurr = redro[i];
+                    break;
+                }
+                if (startDecrement) {
+                    missedUnwrap -= 1;
+                }
+                if (redro[i] == msg.sender) {
+                    startDecrement = true;
+                }
+            }
+            // all checks out. Proceed ignoring the ones that
+            // have failed to unwrap
+            if (expectedCurr == playersTurn) {
+                playersTurn = msg.sender;
+            }
+        }
+        require(msg.sender == playersTurn, "not your turn");
         player.nft = address(allNfts[myOrder].nft);
         player.tokenId = allNfts[myOrder].tokenId;
         delete player.randomnessRequestId;
         playersTurn = nextPlayer;
+        lastActionTime = currTime;
     }
 
     // this consumes the stealerRandomness. can do this at any point
@@ -250,12 +312,12 @@ contract WhiteElephant is
         delete player.stealerRequestId;
     }
 
-    function stealNft(address _theirAddress, address[] calldata _order)
-        public
-        nonReentrant
-        yourTurn(msg.sender)
-        onChristmas
-    {
+    // savage convention discarder
+    function stealNft(
+        address _theirAddress,
+        address[] calldata _order,
+        address[] calldata redro_
+    ) public nonReentrant onChristmas {
         Info storage player = info[msg.sender];
         Info storage them = info[_theirAddress];
         require(them.exists == true);
@@ -267,6 +329,51 @@ contract WhiteElephant is
             "cant steal from them"
         );
         address nextPlayer = ensureOrder(_order);
+        // miners can manipulate for up to 900 seconds
+        // now determine if unwrap is on time
+        uint256 deadline = lastActionTime + unwrapIn;
+        uint256 currTime = block.timestamp;
+        uint256 missedUnwrap = 1;
+        // someone forgot to unwrap
+        if (currTime > deadline) {
+            // let's determine if it is singular or plural
+            while (currTime > deadline) {
+                deadline += unwrapIn;
+                missedUnwrap += 1;
+            }
+            // if deadline == currTime, then the player
+            // has missed their chance to unwrap and the
+            // currently unwrapping address did it as
+            // early as they could.
+            // If however, we overflow, then it must be the
+            // new players turn and so deduct one.
+            if (deadline > currTime) {
+                missedUnwrap -= 1;
+            }
+            // now let's determine if our checks are valid
+            // if they are not, there is something super frigging wrong
+            bool startDecrement;
+            address expectedCurr;
+            // loop through the reverse sorted array
+            for (uint256 i = 0; i < players.length; i++) {
+                if (missedUnwrap == 0) {
+                    expectedCurr = redro_[i];
+                    break;
+                }
+                if (startDecrement) {
+                    missedUnwrap -= 1;
+                }
+                if (redro_[i] == msg.sender) {
+                    startDecrement = true;
+                }
+            }
+            // all checks out. Proceed ignoring the ones that
+            // have failed to unwrap
+            if (expectedCurr == playersTurn) {
+                playersTurn = msg.sender;
+            }
+        }
+        require(msg.sender == playersTurn, "not your turn");
         player.nft = info[_theirAddress].nft;
         player.tokenId = info[_theirAddress].tokenId;
         them.wasStolenFrom = true;
@@ -366,9 +473,6 @@ contract WhiteElephant is
         }
     }
 
-    // todo: test this
-    // forbid people to just send ERC721s to us with safeTransfer calls
-    // todo: what happens to the nfts sent without the safeTransfer call?
     function onERC721Received(
         address,
         address,
@@ -378,52 +482,7 @@ contract WhiteElephant is
         revert("deposit the NFTs with reNFT front");
     }
 
-    // info related --=
-
-    function myOrderNum() public view returns (uint16) {
-        Info storage player = info[msg.sender];
-        if (player.exists == false) {
-            return 0;
-        } else {
-            return player.orderNum;
-        }
-    }
-
-    function myStolenFrom() public view returns (bool) {
-        Info storage player = info[msg.sender];
-        if (player.exists == false) {
-            return false;
-        } else {
-            return player.wasStolenFrom;
-        }
-    }
-
-    function myNftAddress() public view returns (address) {
-        Info storage player = info[msg.sender];
-        if (player.exists == false) {
-            return address(0);
-        } else {
-            return player.nft;
-        }
-    }
-
-    function myTokenId() public view returns (uint256) {
-        Info storage player = info[msg.sender];
-        if (player.exists == false) {
-            return 0;
-        } else {
-            return player.tokenId;
-        }
-    }
-
-    function myTicket() public view returns (bool) {
-        Info storage player = info[msg.sender];
-        if (player.exists == false) {
-            return false;
-        } else {
-            return player.hasTicket;
-        }
-    }
+    // -- info related --
 
     function getPlayerInfo(address _player)
         public
@@ -448,8 +507,6 @@ contract WhiteElephant is
         exists = player.exists;
     }
 
-    // ---
-
     function numberOfPlayers() public view returns (uint256) {
         return players.length;
     }
@@ -458,6 +515,8 @@ contract WhiteElephant is
         return players[_number];
     }
 
+    // ----
+
     function endEvent(address[] calldata _turns) public onChristmas {
         ensureOrder(_turns);
         // if someone hasn't unwrapped, just send them what they
@@ -465,29 +524,23 @@ contract WhiteElephant is
         // if someone hasn't unwrapped, then noone has stolen from
         // them, so there is only randomness generated when the ticket
         // was bought
+        // if someone bricks this with untransfarable NFT, we can always
+        // send the winners them manually with the methods below
         for (uint256 i = 0; i < players.length; i++) {
             Info storage player = info[players[i]];
+            // those whose address is zero
             if (player.nft != address(0)) {
                 ERC721(player.nft).transferFrom(
                     address(this),
                     players[i],
                     player.tokenId
                 );
-            } else {
-                // they have missed their chance to unwrap. their ability to
-                // steal is revoked as a result
-                uint256 theirTurn =
-                    whichTurn(_turns, player.randomnessRequestId);
-                ERC721(allNfts[theirTurn].nft).transferFrom(
-                    address(this),
-                    players[i],
-                    allNfts[theirTurn].tokenId
-                );
             }
         }
     }
 
     // admin related
+
     function setTicketPrice(uint256 _value) external onlyOwner {
         ticketPrice = _value;
     }
