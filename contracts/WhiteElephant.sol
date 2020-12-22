@@ -3,6 +3,7 @@
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -347,6 +348,24 @@ contract WhiteElephant is
         }
     }
 
+    function whichTurn(address[] calldata _turns, bytes32 _requestId)
+        internal
+        view
+        returns (uint256 myOrder)
+    {
+        require(_turns.length == players.length, "huh get your lengths sorted");
+        if (_turns.length == 1) {
+            return 0;
+        }
+        require(info[_turns[0]].hasTicket == true, "dont be cheating");
+        for (uint256 i = 1; i < players.length - 1; i++) {
+            require(info[_turns[i]].hasTicket == true, "dont be cheating");
+            if (info[_turns[i]].randomnessRequestId == _requestId) {
+                return i;
+            }
+        }
+    }
+
     // todo: test this
     // forbid people to just send ERC721s to us with safeTransfer calls
     // todo: what happens to the nfts sent without the safeTransfer call?
@@ -412,7 +431,8 @@ contract WhiteElephant is
         returns (
             address nft,
             uint256 tokenId,
-            uint16 orderNumber,
+            bytes32 randomnessRequestId,
+            bytes32 stealerRequestId,
             bool hasTicket,
             bool wasStolenFrom,
             bool exists
@@ -421,7 +441,8 @@ contract WhiteElephant is
         Info storage player = info[_player];
         nft = player.nft;
         tokenId = player.tokenId;
-        orderNumber = player.orderNum;
+        randomnessRequestId = player.randomnessRequestId;
+        stealerRequestId = player.stealerRequestId;
         hasTicket = player.hasTicket;
         wasStolenFrom = player.wasStolenFrom;
         exists = player.exists;
@@ -437,20 +458,51 @@ contract WhiteElephant is
         return players[_number];
     }
 
-    // todo: test this
-    function endEvent() public onChristmas {
+    function endEvent(address[] calldata _turns) public onChristmas {
+        ensureOrder(_turns);
+        // if someone hasn't unwrapped, just send them what they
+        // would have gotten if they would have unwrapped
+        // if someone hasn't unwrapped, then noone has stolen from
+        // them, so there is only randomness generated when the ticket
+        // was bought
         for (uint256 i = 0; i < players.length; i++) {
             Info storage player = info[players[i]];
-            ERC721(player.nft).transferFrom(
-                address(this),
-                players[i],
-                player.tokenId
-            );
+            if (player.nft != address(0)) {
+                ERC721(player.nft).transferFrom(
+                    address(this),
+                    players[i],
+                    player.tokenId
+                );
+            } else {
+                // they have missed their chance to unwrap. their ability to
+                // steal is revoked as a result
+                uint256 theirTurn =
+                    whichTurn(_turns, player.randomnessRequestId);
+                ERC721(allNfts[theirTurn].nft).transferFrom(
+                    address(this),
+                    players[i],
+                    allNfts[theirTurn].tokenId
+                );
+            }
         }
     }
 
     // admin related
-    function setTicketPrice(uint256 _value) public onlyOwner {
+    function setTicketPrice(uint256 _value) external onlyOwner {
         ticketPrice = _value;
+    }
+
+    function withdrawERC721(address nft, uint256 tokenId) external onlyOwner {
+        ERC721(nft).transferFrom(address(this), msg.sender, tokenId);
+    }
+
+    function withdrawERC20(address erc20) external onlyOwner {
+        ERC20 token = ERC20(erc20);
+        token.approve(msg.sender, 0xfffffffffffffffffffffffffffffff);
+        token.transfer(msg.sender, token.balanceOf(address(this)));
+    }
+
+    function withdrawEth() external onlyOwner {
+        msg.sender.transfer(address(this).balance);
     }
 }
