@@ -1,5 +1,6 @@
+// I shall not be like Riemann, there shall-eth be scaffolding left in place. 10-4 as Nick says
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
@@ -17,6 +18,7 @@ contract WhiteElephant is
         address nft;
         uint256 tokenId;
         bytes32 randomnessRequestId;
+        bytes32 stealerRequestId;
         uint16 orderNum;
         bool hasTicket;
         bool wasStolenFrom;
@@ -44,13 +46,8 @@ contract WhiteElephant is
 
     // requestId => randomness
     mapping(uint256 => uint256) public entropy;
-    // on Christmas day, someone must call a function to order
-    // the Chainlink randomness. The below is the result of that.
-    // If there are 42 players, then each requestId will be mapped
-    // to the relative order number. i.e. from 1 to 42 inclusive.
-    mapping(uint256 => uint256) public order;
     // this variable is used to signify whose turn it currently is
-    uint256 public turnNum;
+    address public playersTurn;
 
     uint256 internal christmasBlockNum = 1;
 
@@ -86,7 +83,7 @@ contract WhiteElephant is
         fee = 0.1 * 10**18; // 0.1 LINK
     }
 
-    // foreseable that someone may try to game this by calling this
+    // foreseeable that someone may try to game this by calling this
     // as soon as they see a transaction pending to buy ticket.
     // or if someone was stolen from. How do I get rid of front-running here?
     // This function is not a problem on the initial ticket buy.
@@ -210,31 +207,47 @@ contract WhiteElephant is
         allNfts.push(Nft(_nft, _tokenId));
     }
 
-    function unwrap() public yourTurn(msg.sender) onChristmas {
+    // when someone steals from someone, they do not use their
+    // randomness, we will then steal their randomness and give
+    // it to the person who has been stolen from. When they unwrap
+    // they will unwrap what the stealer would have unwrapped.
+    // If they yet steal from someone else, then we once again
+    // transfer their randomness. This way everyone will always have
+    // an NFT to unwrap
+    function unwrap(address[] calldata order)
+        external
+        nonReentrant
+        yourTurn(msg.sender)
+        onChristmas
+    {
+        // the below line will revert if the order passed is incorrect
+        // by passing the ordered array of players, we avoid ordering
+        // ourselves on-chain
+        uint256 myOrder, address nextPlayer = ensureOrder(order);
         Info storage player = info[msg.sender];
-        player.nft = address(allNfts[currNftToUnwrap].nft);
-        player.tokenId = allNfts[currNftToUnwrap].tokenId;
-        turnNum++;
+        player.nft = address(allNfts[myOrder].nft);
+        player.tokenId = allNfts[myOrder].tokenId;
+        delete player.randomnessRequestId;
+        playersTurn = nextPlayer;
     }
 
-    // turnNum is not incremented. This can be done at any point
-    function unwrapAfterSteal() public onChristmas {
+    // this consumes the stealerRandomness. can do this at any point
+    function unwrapAfterSteal() external nonReentrant onChristmas {
+        // order here no longer matters
         Info storage player = info[msg.sender];
-
-        require(player.exists == true);
-        require(player.wasStolenFrom == true);
-        require(player.nft == address(0));
-        require(player.tokenId == 0);
-        require(player.orderNum != 0);
         require(player.hasTicket == true);
-
-        // todo: chainlink
-        player.nft = address(allNfts[currNftToUnwrap].nft);
-        player.tokenId = allNfts[currNftToUnwrap].tokenId;
+        require(player.wasStolenFrom == true);
+        require(player.stealerRequestId != 0);
+        require(player.nft == address(0));
+        uint256 nftToUnwrap = ensureOrder(order, player.stealerRequestId);
+        player.nft = address(allNfts[nftToUnwrap].nft);
+        player.tokenId = allNfts[nftToUnwrap].tokenId;
+        delete player.stealerRequestId;
     }
 
-    function stealNft(address _theirAddress)
+    function stealNft(address _theirAddress, address[] calldata _order)
         public
+        nonReentrant
         yourTurn(msg.sender)
         onChristmas
     {
@@ -248,18 +261,66 @@ contract WhiteElephant is
                 entropy[them.randomnessRequestId],
             "cant steal from them"
         );
+        uint256 myOrder, address nextPlayer = ensureOrder(_order);
         player.nft = info[_theirAddress].nft;
         player.tokenId = info[_theirAddress].tokenId;
         them.wasStolenFrom = true;
-        them.nft = address(0);
-        them.tokenId = 0;
-        // reset their randomnessRequestId so that they can generate new randomness
-        // when they unwrap again for the last time (or steal themselves)
-        // if their randomnessRequest is zero, but nft address is non zero -
-        // they have stolen themselves. And can no longer unwrap or be stolen from
-        // this is final
-        them.randomnessRequestId = 0;
-        turnNum++;
+        them.stealerRequestId = player.randomnessRequestId;
+        delete them.nft;
+        delete them.tokenId;
+        delete player.randomnessRequestId;
+        playersTurn = nextPlayer;
+    }
+
+    function ensureOrder(address[] calldata _turns, uint256 _requestId) returns (uint256 myOrder) {
+        require(_turns.length == players.length, "huh get your lengths sorted");
+        if (_turns.length == 1) {
+            return 0;
+        }
+        require(info[_turns[0]].hasTicket == true, "dont be cheating");
+        uint256 currRandomness = entropy[info[_turns[0]].requestId];
+        for (uint256 i = 1; i < players.length - 1; i++) {
+            require(info[_turns[i]].hasTicket == true, "dont be cheating");
+            uint256 nextRandomness = entropy[info[_turns[i]].requestId];
+            require(
+                currRandomness <= nextRandomness,
+                "incorrectly ordered turns arr"
+            );
+            if (info[_turns[i]] == address(msg.sender)) {
+              myOrder = i;
+            }
+        }
+    }
+
+    // the turns here are in the order of the players
+    // first address is the one with the lowest chainlink randomness
+    // so when we compare its randomness to that of the next player
+    // it must be lower and so on. When we have looped through all
+    // of the players we know the order is established
+    function ensureOrder(address[] calldata _turns) internal pure returns (uint256 myOrder, address nextPlayer) {
+        require(_turns.length == players.length, "huh get your lengths sorted");
+        if (_turns.length == 1) {
+            // well that's a bummer;
+            return (0, address(0));
+        }
+        require(info[_turns[0]].hasTicket == true, "dont be cheating");
+        uint256 currRandomness = entropy[info[_turns[0]].requestId];
+        for (uint256 i = 1; i < players.length - 1; i++) {
+            require(info[_turns[i]].hasTicket == true, "dont be cheating");
+            uint256 nextRandomness = entropy[info[_turns[i]].requestId];
+            require(
+                currRandomness <= nextRandomness,
+                "incorrectly ordered turns arr"
+            );
+            if (info[_turns[i]] == address(msg.sender)) {
+              myOrder = i;
+              if (i + 1 == players.length) {
+                nextPlayer = address(0);
+              } else {
+                nextPlayer = _turns[i + 1];
+              }
+            }
+        }
     }
 
     // todo: test this
