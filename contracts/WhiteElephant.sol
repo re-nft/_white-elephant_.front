@@ -32,19 +32,11 @@ contract WhiteElephant is
     }
 
     mapping(address => Info) private info;
-
-    // todo: this will be chainlink
-    // 0 signifies no ticket number. i.e. you have not bought the ticket
-    uint16 public orderNum = 1;
-    uint16 public currNftToUnwrap = 0;
     uint256 public ticketPrice = 0.001 ether;
-
     address[] public players;
     Nft[] public allNfts;
-
     bytes32 internal keyHash;
     uint256 internal fee;
-
     // requestId => randomness
     mapping(bytes32 => uint256) public entropy;
     // this variable is used to signify whose turn it currently is
@@ -142,9 +134,6 @@ contract WhiteElephant is
         returns (bytes32 requestId)
     {
         Info storage player = info[msg.sender];
-        // todo: this requires resetting the randomness when it is being consumed
-        // unwrap after stolen mustn't reset. Because each player is only ever allowed
-        // to unwrap twice at most.
         require(
             player.randomnessRequestId == 0,
             "cant generate more than once"
