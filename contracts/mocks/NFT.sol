@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
@@ -25,7 +25,7 @@ contract Nft is ERC721 {
         "https://ipfs.daonomic.com/ipfs/QmapLALpFj7ydPjF3HG3mwtXsPoALfkLEK2MoHwBv86QdA"
     ];
 
-    constructor() ERC721("NFT", "NFT") {}
+    constructor() public ERC721("NFT", "NFT") {}
 
     function awardNft(address to) public returns (uint256) {
         __tokenIds.increment();

@@ -11,5 +11,8 @@ const addresses = {
   homestead: {
     whiteElephant: "",
   },
+  kovan: {
+    whiteElephant: "",
+  }
 };
 export default addresses;

@@ -1,6 +1,6 @@
 // I shall not be like Riemann, there shall-eth be scaffolding left in place. 10-4 as Nick says
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.12;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721Holder.sol";
@@ -45,16 +45,14 @@ contract WhiteElephant is
     uint256 internal fee;
 
     // requestId => randomness
-    mapping(uint256 => uint256) public entropy;
+    mapping(bytes32 => uint256) public entropy;
     // this variable is used to signify whose turn it currently is
     address public playersTurn;
 
     uint256 internal christmasBlockNum = 1;
 
     modifier yourTurn(address _sender) {
-        uint256 sendersRequestId = info[_sender].randomnessRequestId;
-        uint256 sendersTurnNum = order[sendersRequestId];
-        require(sendersTurnNum == turnNum, "not your turn");
+        require(_sender == playersTurn, "not your turn");
         _;
     }
 
@@ -146,7 +144,7 @@ contract WhiteElephant is
         internal
         override
     {
-        randomResult = randomness;
+        entropy[requestId] = randomness;
     }
 
     function buyTicket(uint256 _userProvidedSeed) public payable nonReentrant {
@@ -220,11 +218,12 @@ contract WhiteElephant is
         yourTurn(msg.sender)
         onChristmas
     {
+        Info storage player = info[msg.sender];
         // the below line will revert if the order passed is incorrect
         // by passing the ordered array of players, we avoid ordering
         // ourselves on-chain
-        uint256 myOrder, address nextPlayer = ensureOrder(order);
-        Info storage player = info[msg.sender];
+        (uint256 myOrder, address nextPlayer) =
+            ensureOrder(order, player.randomnessRequestId, false);
         player.nft = address(allNfts[myOrder].nft);
         player.tokenId = allNfts[myOrder].tokenId;
         delete player.randomnessRequestId;
@@ -232,14 +231,19 @@ contract WhiteElephant is
     }
 
     // this consumes the stealerRandomness. can do this at any point
-    function unwrapAfterSteal() external nonReentrant onChristmas {
+    function unwrapAfterSteal(address[] calldata _order)
+        external
+        nonReentrant
+        onChristmas
+    {
         // order here no longer matters
         Info storage player = info[msg.sender];
         require(player.hasTicket == true);
         require(player.wasStolenFrom == true);
         require(player.stealerRequestId != 0);
         require(player.nft == address(0));
-        uint256 nftToUnwrap = ensureOrder(order, player.stealerRequestId);
+        (uint256 nftToUnwrap, ) =
+            ensureOrder(_order, player.stealerRequestId, true);
         player.nft = address(allNfts[nftToUnwrap].nft);
         player.tokenId = allNfts[nftToUnwrap].tokenId;
         delete player.stealerRequestId;
@@ -261,7 +265,7 @@ contract WhiteElephant is
                 entropy[them.randomnessRequestId],
             "cant steal from them"
         );
-        uint256 myOrder, address nextPlayer = ensureOrder(_order);
+        address nextPlayer = ensureOrder(_order);
         player.nft = info[_theirAddress].nft;
         player.tokenId = info[_theirAddress].tokenId;
         them.wasStolenFrom = true;
@@ -272,22 +276,31 @@ contract WhiteElephant is
         playersTurn = nextPlayer;
     }
 
-    function ensureOrder(address[] calldata _turns, uint256 _requestId) returns (uint256 myOrder) {
+    function ensureOrder(address[] calldata _turns)
+        internal
+        view
+        returns (address nextPlayer)
+    {
         require(_turns.length == players.length, "huh get your lengths sorted");
         if (_turns.length == 1) {
-            return 0;
+            return address(0);
         }
         require(info[_turns[0]].hasTicket == true, "dont be cheating");
-        uint256 currRandomness = entropy[info[_turns[0]].requestId];
+        uint256 currRandomness = entropy[info[_turns[0]].randomnessRequestId];
         for (uint256 i = 1; i < players.length - 1; i++) {
             require(info[_turns[i]].hasTicket == true, "dont be cheating");
-            uint256 nextRandomness = entropy[info[_turns[i]].requestId];
+            uint256 nextRandomness =
+                entropy[info[_turns[i]].randomnessRequestId];
             require(
                 currRandomness <= nextRandomness,
                 "incorrectly ordered turns arr"
             );
-            if (info[_turns[i]] == address(msg.sender)) {
-              myOrder = i;
+            if (_turns[i] == address(msg.sender)) {
+                if (i + 1 == players.length) {
+                    nextPlayer = address(0);
+                } else {
+                    nextPlayer = _turns[i + 1];
+                }
             }
         }
     }
@@ -297,28 +310,39 @@ contract WhiteElephant is
     // so when we compare its randomness to that of the next player
     // it must be lower and so on. When we have looped through all
     // of the players we know the order is established
-    function ensureOrder(address[] calldata _turns) internal pure returns (uint256 myOrder, address nextPlayer) {
+    function ensureOrder(
+        address[] calldata _turns,
+        bytes32 _requestId,
+        bool _stolenFrom
+    ) internal view returns (uint256 myOrder, address nextPlayer) {
         require(_turns.length == players.length, "huh get your lengths sorted");
         if (_turns.length == 1) {
             // well that's a bummer;
             return (0, address(0));
         }
         require(info[_turns[0]].hasTicket == true, "dont be cheating");
-        uint256 currRandomness = entropy[info[_turns[0]].requestId];
+        uint256 currRandomness = entropy[info[_turns[0]].randomnessRequestId];
         for (uint256 i = 1; i < players.length - 1; i++) {
             require(info[_turns[i]].hasTicket == true, "dont be cheating");
-            uint256 nextRandomness = entropy[info[_turns[i]].requestId];
+            uint256 nextRandomness =
+                entropy[info[_turns[i]].randomnessRequestId];
             require(
                 currRandomness <= nextRandomness,
                 "incorrectly ordered turns arr"
             );
-            if (info[_turns[i]] == address(msg.sender)) {
-              myOrder = i;
-              if (i + 1 == players.length) {
-                nextPlayer = address(0);
-              } else {
-                nextPlayer = _turns[i + 1];
-              }
+            bytes32 compareVersus;
+            if (_stolenFrom) {
+                compareVersus = info[_turns[i]].randomnessRequestId;
+            } else {
+                compareVersus = info[_turns[i]].stealerRequestId;
+            }
+            if (compareVersus == _requestId) {
+                myOrder = i;
+                if (i + 1 == players.length) {
+                    nextPlayer = address(0);
+                } else {
+                    nextPlayer = _turns[i + 1];
+                }
             }
         }
     }
