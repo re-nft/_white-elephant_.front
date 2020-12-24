@@ -49,6 +49,7 @@ contract WhiteElephant is
     uint256 public christmasTimestamp = 1;
     // denotes the timestamp at which the last unwrap / steal took place
     uint256 lastActionTime = christmasTimestamp;
+    bool public eventEnded;
 
     // this check that it is your turn
     // if it is not but the previous player / players
@@ -143,6 +144,10 @@ contract WhiteElephant is
         player.randomnessRequestId = requestId;
         return requestId;
     }
+
+    // KeyHash: 0xAA77729D3466CA35AE8D28B3BBAC7CC36A5031EFDC430821C02BC31A238AF445
+    // Coordinator: 0xf0d54349aDdcf704F77AE15b96510dEA15cb7952
+    // Fee: 2000000000000000000
 
     /**
      * Callback function used by VRF Coordinator
@@ -506,8 +511,9 @@ contract WhiteElephant is
 
     // ----
 
-    function endEvent(address[] calldata _turns) public onChristmas {
-        ensureOrder(_turns);
+    function endEvent() external onlyOwner {
+        eventEnded = true;
+        // ensureOrder(_turns);
         // if someone hasn't unwrapped, just send them what they
         // would have gotten if they would have unwrapped
         // if someone hasn't unwrapped, then noone has stolen from
@@ -515,17 +521,30 @@ contract WhiteElephant is
         // was bought
         // if someone bricks this with untransfarable NFT, we can always
         // send the winners them manually with the methods below
-        for (uint256 i = 0; i < players.length; i++) {
-            Info storage player = info[players[i]];
-            // those whose address is zero
-            if (player.nft != address(0)) {
-                ERC721(player.nft).transferFrom(
-                    address(this),
-                    players[i],
-                    player.tokenId
-                );
-            }
-        }
+        // for (uint256 i = 0; i < players.length; i++) {
+        //     Info storage player = info[players[i]];
+        //     // those whose address is zero
+        //     if (player.nft != address(0)) {
+        // ERC721(player.nft).transferFrom(
+        //     address(this),
+        //     players[i],
+        //     player.tokenId
+        // );
+        //     }
+        // }
+    }
+
+    // to be called by each player on event end
+    function claimNft() external {
+        require(eventEnded, "the event is not finished yet");
+        Info storage player = info[players[i]];
+        require(player.nft != address(0), "nothing to claim");
+        require(player.hasTicket, "you dont have a ticket");
+        ERC721(player.nft).transferFrom(
+            address(this),
+            players[i],
+            player.tokenId
+        );
     }
 
     // admin related
