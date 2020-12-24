@@ -12,7 +12,7 @@ const addresses = {
     whiteElephant: "",
   },
   kovan: {
-    whiteElephant: "0x595D76959a6Bc90DADD59a281E773805894c56A7",
+    whiteElephant: "0xb2b749C3e2A2AD4f72b4f22B4cD47B71D8432954",
   }
 };
 export default addresses;
