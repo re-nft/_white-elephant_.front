@@ -53,13 +53,7 @@ const Table = () => {
       const player = await contract.getPlayerNumber(i);
       allPlayers.push({ address: player, order: i + 1 });
     }
-    const __currTurn = await contract.currNftToUnwrap();
-    let _currTurn = -1;
-    try {
-      _currTurn = Number(__currTurn);
-    } catch (err) {
-      console.warn("can't turn my order num to Number type");
-    }
+    const _currTurn = await contract.playersTurn();
     setCurrTurn(_currTurn);
     setData(allPlayers);
   }, [whiteElephant]);
@@ -107,7 +101,7 @@ const Table = () => {
 const MainFrame: React.FC = () => {
   const { address } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
-  const { prize, enableCheckingPrize, getPrizeInfo, ticketNum } = useContext(
+  const { prize, enableCheckingPrize, getPrizeInfo, playerInfo } = useContext(
     MeContext
   );
   const [error, setError] = useState<string>("");
@@ -142,7 +136,8 @@ const MainFrame: React.FC = () => {
     <Box>
       <Box style={{ marginBottom: "4em" }}>
         <Typography variant="h3">
-          Thy Prize {prize.tokenId === -1 && "shall-eth be here-eth"}
+          Thy <span className="rainbow-text">Prize</span>{" "}
+          {prize.tokenId === -1 && "shall-eth be here-eth"}
         </Typography>
       </Box>
       <Box style={{ position: "relative" }}>
@@ -187,7 +182,7 @@ const MainFrame: React.FC = () => {
               <Typography>Now, noone will be able to steal from you</Typography>
             </Box>
           )}
-          {prize.tokenId === -1 && address && ticketNum > 0 && (
+          {prize.tokenId === -1 && address && playerInfo.hasTicket && (
             <Box style={{ marginTop: "2em" }}>
               <UnwrapButton
                 normalUnwrap={unwrap}

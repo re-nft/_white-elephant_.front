@@ -51,19 +51,19 @@ const ContractsContext = createContext<ContractsContextType>(
 export const ContractsContextProvider: React.FC = ({ children }) => {
   const { signer, addresses, abis, address } = useContext(DappContext);
   const [elephantContract, setElephantContract] = useState<ethers.Contract>();
-
   const getContract = useCallback(async () => {
-    if (!addresses || !signer || !abis?.whiteElephant) {
-      console.debug("no addresses, signer, or we abi");
+    if (!addresses || !signer || !abis.whiteElephant) {
+      console.debug("no addresses, signer, or abi");
       return null;
     }
-
+    console.debug(
+      `instantiating the contract with ${addresses.whiteElephant}, abi and signer`
+    );
     const _contract = new ethers.Contract(
       addresses.whiteElephant,
       abis.whiteElephant,
       signer
     );
-
     setElephantContract(_contract);
   }, [addresses, signer, abis]);
 
@@ -83,15 +83,12 @@ export const ContractsContextProvider: React.FC = ({ children }) => {
         console.info("could not get erc721 contract");
         return;
       }
-
       let tx;
-
       if (tokenId) {
         tx = await contract.approve(operator, tokenId);
       } else {
         tx = await contract.setApprovalForAll(operator, true);
       }
-
       await tx.wait();
     },
     [getContractErc721]
@@ -101,7 +98,6 @@ export const ContractsContextProvider: React.FC = ({ children }) => {
     async (contract: ethers.Contract, tokenId: string) => {
       if (!addresses.whiteElephant || !contract) return false;
       const account = await contract.getApproved(tokenId);
-
       return account.toLowerCase() === addresses.whiteElephant.toLowerCase();
     },
     [addresses.whiteElephant]
@@ -110,7 +106,6 @@ export const ContractsContextProvider: React.FC = ({ children }) => {
   const isApprovedErc721 = useCallback(
     async (at: Address, operator: Address, tokenId?: string) => {
       const contract = getContractErc721(at);
-
       if (!contract) {
         console.info("could not get erc721 contract");
         return false;
@@ -123,15 +118,12 @@ export const ContractsContextProvider: React.FC = ({ children }) => {
         console.info("metamask is not connected");
         return false;
       }
-
       let itIs = false;
-
       try {
         itIs = await contract.isApprovedForAll(address, operator);
       } catch (err) {
         console.error(err);
       }
-
       if (itIs) return true;
       if (!tokenId) return false;
       itIs = await _isApprovedErc721(contract, tokenId);

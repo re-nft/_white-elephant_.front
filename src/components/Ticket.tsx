@@ -3,12 +3,15 @@ import { Box, Button, Typography } from "@material-ui/core";
 // import { Alert } from "@material-ui/lab";
 import { ethers } from "ethers";
 
+import { randomBytes } from "crypto";
 import ContractsContext from "../contexts/Contracts";
 import MeContext from "../contexts/Me";
 
+// const BN = ethers.BigNumber;
+
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
-  const { ticketNum, ticketPrice, getTicketInfo } = useContext(MeContext);
+  const { playerInfo, ticketPrice, getTicketInfo } = useContext(MeContext);
   const [error, setError] = useState<string>();
 
   const handleBuy = useCallback(async () => {
@@ -21,13 +24,19 @@ const Ticket: React.FC = () => {
       value: ethers.utils.parseEther(String(ticketPrice)),
     };
     try {
-      const tx = await contract.buyTicket(overrides);
+      const value = randomBytes(32);
+      // console.debug(`user entropy is: 0x${value.toString("hex")}`);
+      const tx = await contract.buyTicket(
+        `0x${value.toString("hex")}`,
+        overrides
+      );
       // await the mining of a single block for confirmation
       await tx.wait(1);
       // trigger update after successful ticket buy
       await getTicketInfo();
       setError("");
     } catch (err) {
+      console.error(err);
       // todo: avoid showing unknown when tx is rejected by user
       setError(err?.data?.message || "unknown");
     }
@@ -40,7 +49,7 @@ const Ticket: React.FC = () => {
           <Box
             style={{ textAlign: "center", margin: "0.5em", paddingTop: "2em" }}
           >
-            {ticketNum === -1 && ticketPrice !== -1 && (
+            {!playerInfo.hasTicket && ticketPrice !== -1 && (
               <Box>
                 <h1 style={{ paddingBottom: "0.5em" }}>{ticketPrice} ETH</h1>
                 <Button variant="outlined" onClick={handleBuy}>
@@ -61,9 +70,9 @@ const Ticket: React.FC = () => {
             )}
           </Box>
           <Box className="ticket__text">TICKET</Box>
-          {ticketNum !== -1 && (
+          {playerInfo.hasTicket && (
             <Box style={{ margin: "1em" }}>
-              <Typography>Your ticket #: {ticketNum}</Typography>
+              <span className="rainbow-text">YoU ArE In IT To WIN It</span>
             </Box>
           )}
         </Box>

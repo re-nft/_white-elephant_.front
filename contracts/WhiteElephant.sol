@@ -43,6 +43,7 @@ contract WhiteElephant is
     bytes32 private keyHash;
     uint256 private fee;
     /// ---------------------
+    bool firstBuy = true;
     /// Whose turn it is to unwrap or steal
     address public playersTurn;
     /** @dev Each player has this many seconds after last actionTime
@@ -106,6 +107,10 @@ contract WhiteElephant is
         info[msg.sender].hasTicket = true;
         info[msg.sender].exists = true;
         players.push(msg.sender);
+        if (firstBuy) {
+            playersTurn = msg.sender;
+            firstBuy = false;
+        }
     }
 
     // do not allow depositing just about anyone

@@ -60,10 +60,12 @@ export const DappContextProvider: React.FC = ({ children }) => {
   // const [windowSelectedAccount, setSelectedAccount] = useState<string>("");
 
   const getAddress = useCallback(async () => {
-    if (!signer) return;
+    if (!signer) {
+      console.debug("can't get own address");
+      return;
+    }
     const _address = await signer.getAddress();
     setAddress(_address);
-    //@ts-ignore
   }, [signer]);
 
   const getNetwork = useCallback(async () => {
@@ -72,9 +74,8 @@ export const DappContextProvider: React.FC = ({ children }) => {
       return;
     }
     const _network = await provider.detectNetwork();
-    let __network = _network.name.toLowerCase();
-    __network = __network === "unknown" ? "localhost" : __network;
-    setNetwork(__network);
+    console.debug(`network identified as ${_network.name}`);
+    setNetwork(_network.name);
   }, [provider]);
 
   // * not tracking the network change
@@ -109,28 +110,11 @@ export const DappContextProvider: React.FC = ({ children }) => {
     setSigner(_signer);
   }, []);
 
-  // const handleSelectedAcconut = useCallback(() => {
-  // console.debug(
-  //   "currently selected metamask account",
-  //   //@ts-ignore
-  //   window?.ethereum?.selectedAccount
-  // );
-  //@ts-ignore
-  // setSelectedAccount(window?.ethereum?.selectedAccount || "");
-  // }, []);
-
   useEffect(() => {
     getAddress();
     getNetwork();
     getAddressesAndAbis();
   }, [getAddress, getNetwork, getAddressesAndAbis]);
-
-  // useEffect(() => {
-  //   if (address !== windowSelectedAccount) connect();
-  // }, [connect, windowSelectedAccount, address]);
-
-  // todo: there is got to be a better solution
-  // useInterval(handleSelectedAcconut, 2000);
 
   return (
     <DappContext.Provider

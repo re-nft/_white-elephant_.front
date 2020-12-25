@@ -20,10 +20,20 @@ type Prize = {
   media: Blob;
 };
 
+type PlayerInfo = {
+  nft: string;
+  tokenId: number;
+  randomnessRequestId: string;
+  stealerRequestId: string;
+  hasTicket: boolean;
+  wasStolenFrom: boolean;
+  exists: boolean;
+};
+
 type MeContextT = {
-  ticketNum: number;
   ticketPrice: number;
   prize: Prize;
+  playerInfo: PlayerInfo;
   // isLoadingPrize: boolean;
   getTicketInfo: () => Promise<void>;
   getPrizeInfo: () => Promise<void>;
@@ -38,7 +48,6 @@ type MeContextT = {
 };
 
 const defaultValue: MeContextT = {
-  ticketNum: -1,
   ticketPrice: -1,
   getTicketInfo: async () => {
     throw new Error("must be implemented");
@@ -48,6 +57,15 @@ const defaultValue: MeContextT = {
     tokenId: -1,
     iWasStolenFrom: false,
     media: new Blob(),
+  },
+  playerInfo: {
+    nft: "",
+    tokenId: -1,
+    randomnessRequestId: "",
+    stealerRequestId: "",
+    hasTicket: false,
+    wasStolenFrom: false,
+    exists: false,
   },
   // isLoadingPrize: false,
   getPrizeInfo: async () => {
@@ -65,11 +83,12 @@ const MeContext = createContext<MeContextT>(defaultValue);
 export const MeContextProvider: React.FC = ({ children }) => {
   const { signer } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
-  const [ticketNum, setTicketNum] = useState<number>(-1);
+  const [playerInfo, setPlayerInfo] = useState<MeContextT["playerInfo"]>(
+    defaultValue.playerInfo
+  );
   const [ticketPrice, setTicketPrice] = useState<number>(-1);
   const [prize, setPrize] = useState<MeContextT["prize"]>(defaultValue.prize);
-  // const [isLoadingPrize, setLoadingPrize] = useState<boolean>(false);
-  const [startCheckingPrize, setStartCheckingPrize] = useState<boolean>(false);
+  const [, setStartCheckingPrize] = useState<boolean>(false);
 
   // this function will only change if whiteElephant changes
   // this is required to avoid the recreation of the poller hook
@@ -79,15 +98,14 @@ export const MeContextProvider: React.FC = ({ children }) => {
       console.warn("no contract instance");
       return;
     }
-
-    const orderNum = await contract.myOrderNum();
-    const resolvedTicketNum = orderNum === 0 ? -1 : orderNum;
-    setTicketNum(resolvedTicketNum);
-
+    const _playerInfo = await contract.getPlayerInfo(
+      (await signer.getAddress()) || ethers.constants.AddressZero
+    );
+    setPlayerInfo(_playerInfo);
     const _price = await contract.ticketPrice();
     const price = ethers.utils.formatEther(_price);
     setTicketPrice(Number(price));
-  }, [whiteElephant]);
+  }, [signer, whiteElephant]);
 
   // const fetchMedia = useCallback(
   //   async (_prize) => {
@@ -161,39 +179,32 @@ export const MeContextProvider: React.FC = ({ children }) => {
       return;
     }
     // check if need to force starting to check the prize
-    const nftAddress = await contract.myNftAddress();
-    let tokenId = Number(await contract.myTokenId());
-    if (tokenId !== -1 && nftAddress !== ethers.constants.AddressZero) {
+    const { nft, tokenId: _tokenId } = await contract.getPlayerInfo(
+      (await signer.getAddress()) || ethers.constants.AddressZero
+    );
+    let tokenId = Number(_tokenId);
+    if (nft !== ethers.constants.AddressZero) {
       // force enable start checking the prize
       setStartCheckingPrize(true);
-    }
-    if (!startCheckingPrize) {
+    } else {
       console.debug("not checking for the prize just yet");
       return;
     }
-    // setLoadingPrize(true);
-    if (nftAddress === prize.nft && tokenId === prize.tokenId) {
+    if (nft === prize.nft && tokenId === prize.tokenId) {
       console.debug("same nft, skipping");
       return;
     }
     let iWasStolenFrom = await contract.myStolenFrom();
     // const blob = await fetchMedia({ nft: nftAddress, tokenId });
-    const blob = await shortcutFetchMedia({ nftAddress, tokenId });
+    const blob = await shortcutFetchMedia({ nft, tokenId });
     const _prize = {
-      nft: nftAddress,
+      nft,
       tokenId,
       iWasStolenFrom,
       media: blob,
     };
     setPrize(_prize);
-    // setLoadingPrize(false);
-  }, [
-    prize.nft,
-    prize.tokenId,
-    startCheckingPrize,
-    whiteElephant,
-    shortcutFetchMedia,
-  ]);
+  }, [whiteElephant, signer, prize.nft, prize.tokenId, shortcutFetchMedia]);
 
   const enableCheckingPrize = () => {
     setStartCheckingPrize(true);
@@ -211,12 +222,11 @@ export const MeContextProvider: React.FC = ({ children }) => {
   return (
     <MeContext.Provider
       value={{
-        ticketNum,
+        playerInfo,
         ticketPrice,
         getTicketInfo,
         prize,
         enableCheckingPrize,
-        // isLoadingPrize,
         getPrizeInfo,
         shortcutFetchMedia,
       }}

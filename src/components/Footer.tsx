@@ -3,7 +3,7 @@ import { Box, Typography } from "@material-ui/core";
 
 export default function Footer() {
   return (
-    <Box style={{ marginLeft: "2em" }}>
+    <Box style={{ marginLeft: "2em", paddingBottom: "2em" }}>
       <Typography>
         If you have the itch to support us, here is our{" "}
         <span style={{ fontWeight: "bold" }}>

@@ -35,8 +35,12 @@ const Steal = () => {
   const { address } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
   const { shortcutFetchMedia } = useContext(MeContext);
-  const [available, setAvailable] = useState<StealT[]>([]);
+  const [available] = useState<StealT[]>([]);
   const [, setError] = useState<string>("");
+
+  const isZeroAddress = (_nft: string) => ethers.constants.AddressZero === _nft;
+  const sameAddress = (addr1: string, addr2: string) =>
+    addr1.toLowerCase() === addr2.toLowerCase();
 
   // responsible for polling the nfts that can be stolen
   // by the user
@@ -47,7 +51,7 @@ const Steal = () => {
     // everything that is above this number
     // and that has not been stolen from yet
     // can be stolen from
-    const myTurn = await contract.myOrderNum();
+    const myTurn = await contract.playersTurn();
 
     // players before me
     const stealFrom: StealT[] = [];
@@ -66,22 +70,18 @@ const Steal = () => {
       });
 
       if (!blob) blob = new Blob();
-
-      if (
-        !wasStolenFrom &&
-        nft !== ethers.constants.AddressZero &&
-        player.toLowerCase() !== address.toLowerCase()
-      ) {
-        stealFrom.push({
-          currOwner: player,
-          nftAddress: nft,
-          tokenId: tokenId.toNumber(),
-          media: blob,
-        });
+      if (wasStolenFrom || isZeroAddress(nft) || sameAddress(player, address)) {
+        console.debug("can't steal here");
       }
+      stealFrom.push({
+        currOwner: player,
+        nftAddress: nft,
+        tokenId: tokenId.toNumber(),
+        media: blob,
+      });
     }
 
-    setAvailable(stealFrom);
+    // setAvailable(stealFrom);
   }, [whiteElephant, address, shortcutFetchMedia]);
 
   const stealNft = useCallback(
