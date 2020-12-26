@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useContext } from "react";
 import { Button, Box, Typography } from "@material-ui/core";
+import { ethers } from "ethers";
 
 import usePoller from "../hooks/Poller";
 import ContractsContext from "../contexts/Contracts";
 import DappContext from "../contexts/Dapp";
 import MeContext from "../contexts/Me";
-import { ethers } from "ethers";
 
 type StealT = {
   currOwner: string;

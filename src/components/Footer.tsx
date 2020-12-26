@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Typography } from "@material-ui/core";
 import Snackbar, { SnackbarOrigin } from "@material-ui/core/Snackbar";
+
 import Cookie from "../public/img/undraw_cookie_love_ulvn.svg";
 
 export interface State extends SnackbarOrigin {
@@ -19,7 +20,16 @@ export default function Footer() {
   };
   return (
     <Box>
-      <Box style={{ marginLeft: "2em", paddingBottom: "2em" }}>
+      <Box
+        style={{
+          marginLeft: "2em",
+          paddingBottom: "2em",
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          width: "100%",
+        }}
+      >
         <Typography>
           If you have the itch to support us, here is our{" "}
           <span style={{ fontWeight: "bold" }}>
@@ -36,6 +46,13 @@ export default function Footer() {
             ❤️
           </span>{" "}
         </Typography>
+        {/* <Box style={{ textAlign: "right", display: "inline" }}>
+          <img
+            src={Christmas}
+            alt="snowman-christmas"
+            style={{ width: "50%" }}
+          />
+        </Box> */}
       </Box>
       <Snackbar
         anchorOrigin={{ vertical, horizontal }}
