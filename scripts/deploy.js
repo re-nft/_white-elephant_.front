@@ -50,37 +50,50 @@ async function main() {
   const Nft = await ethers.getContractFactory("Nft");
   const nft = await Nft.deploy();
 
-  for (let i = 0; i < 10; i++) {
-    console.log(
-      `Awarding the NFTs, tokenId: ${i + 1} to ${
-        allSigners[0].address
-      }, you are welcome...`
-    );
-    const tx = await nft.awardNft(allSigners[0].address);
-    const receipt = await tx.wait(1);
-    // console.log("Receipt", receipt);
-  }
+  let tx;
+  console.log("Batch awarding the NFTs");
+  tx = await nft.batchAwardNft(allSigners[0].address, 10);
+  await tx.wait(1);
+
+  // * to check that whitelisted depositors is working correctly
+  tx = await nft.awardNft("0x50c3374fd62dd09f18ccc01e1c20f5de66cd6dea");
+  await tx.wait(1);
 
   console.log("Approving the white elephant contract");
   await nft.setApprovalForAll(whiteElephant.address, true);
   console.log("Whitelisting the current deployer for deposits");
-  const tx = await whiteElephant.addWhitelistedDepositors([
-    allSigners[0].address,
-  ]);
+  await whiteElephant.addWhitelistedDepositors([allSigners[0].address]);
+
+  console.log("Batch depositing the NFTs to the white elephant contract");
+  tx = await whiteElephant.batchDepositNft(
+    [...Array(10).fill(nft.address)],
+    [...Array(10).keys()].map((v) => v + 1),
+    { gasLimit: 5_000_000 }
+  );
   await tx.wait(1);
 
-  for (let i = 0; i < 10; i++) {
-    // console.log(`Owner of tokenId: ${i + 1} is ${await nft.ownerOf(i + 1)}`);
-    console.log(`Depositing the NFTs into the contract now, tokenId: ${i + 1}`);
-    try {
-      const tx = await whiteElephant.depositNft(nft.address, i + 1, {
-        gasLimit: 5_000_000,
-      });
-      await tx.wait(1);
-    } catch (err) {
-      console.warn("unpredictable gas probably...");
-    }
-  }
+  console.log("Finally sending some LINK to the white elephant");
+  // straight outta https://docs.ethers.io/v5/api/contract/example/
+  // A Human-Readable ABI; any supported ABI format could be used
+  const abi = [
+    // Read-Only Functions
+    "function balanceOf(address owner) view returns (uint256)",
+    "function decimals() view returns (uint8)",
+    "function symbol() view returns (string)",
+    // Authenticated Functions
+    "function transfer(address to, uint amount) returns (boolean)",
+    // Events
+    "event Transfer(address indexed from, address indexed to, uint amount)",
+  ];
+
+  // This can be an address or an ENS name
+  // const address = "dai.tokens.ethers.eth";
+  const kovanLinkAddress = "0xa36085f69e2889c224210f603d836748e7dc0088";
+  const link = await new ethers.Contract(kovanLinkAddress, abi, allSigners[0]);
+  await link.transfer(
+    whiteElephant.address,
+    ethers.utils.parseEther("2").toString()
+  );
 
   console.log("Nft deployed to:", nft.address);
   console.log("WhiteElephant deployed to:", whiteElephant.address);

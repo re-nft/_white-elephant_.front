@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
+pragma solidity >=0.6.12;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
@@ -22,6 +22,7 @@ contract Nft is ERC721 {
         "ipfs://ipfs/QmULTHFrb1zHuMqg3pfsUJd2SozAGTzaE1uwAbiy4uJAo3",
         "https://ipfs.daonomic.com/ipfs/QmfZkSN2FdpXsfeUZyAhHP7Ux6AQHgEtJGz8Y9RgFwXeJb",
         "https://ipfs.daonomic.com/ipfs/QmUAUMeASGdjkUZDYm3GzkaA89MjeEZLfbRv97p8eqjqvP",
+        "https://ipfs.daonomic.com/ipfs/QmapLALpFj7ydPjF3HG3mwtXsPoALfkLEK2MoHwBv86QdA",
         "https://ipfs.daonomic.com/ipfs/QmapLALpFj7ydPjF3HG3mwtXsPoALfkLEK2MoHwBv86QdA"
     ];
 
@@ -35,5 +36,14 @@ contract Nft is ERC721 {
         _setTokenURI(newItemId, _meta[newItemId - 1]);
 
         return newItemId;
+    }
+
+    function batchAwardNft(address to, uint256 numTimes)
+        public
+        returns (uint256)
+    {
+        for (uint256 i = 0; i < numTimes; i++) {
+            awardNft(to);
+        }
     }
 }

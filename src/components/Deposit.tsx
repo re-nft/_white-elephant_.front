@@ -32,7 +32,10 @@ const Deposit: React.FC = () => {
       await contract.depositNft(nftAddress, tokenId);
       setError("");
     } catch (err) {
-      setError(err?.data?.message || "unknown");
+      console.error(err);
+      console.error(Object.keys(err));
+      // optional chaining + nullish coalescing
+      setError(err?.message ?? "unknown");
     }
   }, [whiteElephant, nftAddress, tokenId, addresses, erc721]);
 

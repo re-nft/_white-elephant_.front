@@ -140,6 +140,16 @@ contract WhiteElephant is
         allNfts.push(Nft(_nft, _tokenId));
     }
 
+    function batchDepositNft(
+        ERC721[] calldata _nfts,
+        uint256[] calldata _tokenIds
+    ) public onlyWhitelisted {
+        require(_nfts.length == _tokenIds.length, "incorrect lengths");
+        for (uint256 i = 0; i < _nfts.length; i++) {
+            depositNft(_nfts[i], _tokenIds[i]);
+        }
+    }
+
     /** When someone steals from someone, they do not use their
      * randomness, we will then steal their randomness and give
      * it to the person who has been stolen from. When they unwrap
