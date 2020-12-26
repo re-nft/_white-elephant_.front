@@ -1,6 +1,6 @@
 const addresses = {
   localhost: {
-    whiteElephant: "",
+    whiteElephant: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
   },
   hardhat: {
     whiteElephant: "",
@@ -12,7 +12,7 @@ const addresses = {
     whiteElephant: "",
   },
   kovan: {
-    whiteElephant: "0x3527206Ea97dFD4Dd53A17F9f99Ae87034D9E4a5",
+    whiteElephant: "",
   }
 };
 export default addresses;

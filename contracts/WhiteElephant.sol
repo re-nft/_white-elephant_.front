@@ -33,6 +33,11 @@ contract WhiteElephant is
         uint256 tokenId;
     }
 
+    // struct Set {
+    //   address[] vals;
+    //   mapping(address => bool) isIn;
+    // }
+
     mapping(address => Info) private info;
     /// requestId => randomness
     mapping(bytes32 => uint256) public entropy;
@@ -55,9 +60,16 @@ contract WhiteElephant is
     uint256 lastActionTime = christmasTimestamp;
     bool public eventEnded;
 
+    mapping(address => bool) internal whitelistedDepositors;
+
     modifier onChristmas() {
         // todo;
         require(block.timestamp >= christmasTimestamp, "wait for event start");
+        _;
+    }
+
+    modifier onlyWhitelisted() {
+        require(whitelistedDepositors[msg.sender], "not allowed to deposit");
         _;
     }
 
@@ -71,8 +83,14 @@ contract WhiteElephant is
             0xa36085F69e2889c224210F603D836748e7dC0088 // LINK Token
         )
     {
+        // * todo
         keyHash = 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4;
         fee = 0.1 * 10**18; // 0.1 LINK
+        // all the depositors that are allowed to deposit the NFT at the time of
+        // the contract instantiation. Can be changed subsequently
+        whitelistedDepositors[
+            0x465DCa9995D6c2a81A9Be80fBCeD5a770dEE3daE
+        ] = true;
     }
 
     function getRandomNumber(uint256 _userProvidedSeed)
@@ -117,7 +135,7 @@ contract WhiteElephant is
     // todo: make a whitelesited arr. Otherwise, people
     // can spam with their sub-par NFTs and the whole
     // event becomes less exciting
-    function depositNft(ERC721 _nft, uint256 _tokenId) public {
+    function depositNft(ERC721 _nft, uint256 _tokenId) public onlyWhitelisted {
         _nft.transferFrom(msg.sender, address(this), _tokenId);
         allNfts.push(Nft(_nft, _tokenId));
     }
@@ -439,5 +457,23 @@ contract WhiteElephant is
 
     function withdrawEth() external onlyOwner {
         msg.sender.transfer(address(this).balance);
+    }
+
+    function addWhitelistedDepositors(address[] calldata _delta)
+        external
+        onlyOwner
+    {
+        for (uint256 i = 0; i < _delta.length; i++) {
+            whitelistedDepositors[_delta[i]] = true;
+        }
+    }
+
+    function removeWhitelistedDepositors(address[] calldata _delta)
+        external
+        onlyOwner
+    {
+        for (uint256 i = 0; i < _delta.length; i++) {
+            whitelistedDepositors[_delta[i]] = false;
+        }
     }
 }

@@ -63,6 +63,11 @@ async function main() {
 
   console.log("Approving the white elephant contract");
   await nft.setApprovalForAll(whiteElephant.address, true);
+  console.log("Whitelisting the current deployer for deposits");
+  const tx = await whiteElephant.addWhitelistedDepositors([
+    allSigners[0].address,
+  ]);
+  await tx.wait(1);
 
   for (let i = 0; i < 10; i++) {
     // console.log(`Owner of tokenId: ${i + 1} is ${await nft.ownerOf(i + 1)}`);
