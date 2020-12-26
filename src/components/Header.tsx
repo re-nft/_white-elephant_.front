@@ -24,7 +24,7 @@ export default function Header() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img src={Discord} />
+            <img src={Discord} alt="discord" />
           </a>
           <a
             style={{ height: "25px", width: "25px" }}
@@ -32,7 +32,7 @@ export default function Header() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img src={Medium} />
+            <img src={Medium} alt="medium" />
           </a>
           <a
             href="https://t.me/renftlabs"
