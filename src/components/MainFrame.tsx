@@ -42,7 +42,7 @@ const UnwrapButton: React.FC<UnwrapButtonProps> = ({
 const Table = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const [data, setData] = useState<Data[]>([]);
-  const [currTurn, setCurrTurn] = useState<number>(-1);
+  const [currTurn, setCurrTurn] = useState<string>("");
 
   const handleData = useCallback(async () => {
     const { contract } = whiteElephant;
@@ -54,6 +54,7 @@ const Table = () => {
       allPlayers.push({ address: player, order: i + 1 });
     }
     const _currTurn = await contract.playersTurn();
+    console.debug("curr player", _currTurn);
     setCurrTurn(_currTurn);
     setData(allPlayers);
   }, [whiteElephant]);
@@ -85,8 +86,8 @@ const Table = () => {
           {data &&
             data.map((d) => (
               <tr
-                key={`${d.address}::${d.order}`}
-                style={{ background: currTurn === d.order - 1 ? "green" : "" }}
+                key={d.address}
+                style={{ background: currTurn === d.address ? "green" : "" }}
               >
                 <td>{d.address}</td>
                 <td>{d.order}</td>

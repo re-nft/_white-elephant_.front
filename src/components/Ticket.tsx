@@ -7,8 +7,6 @@ import { randomBytes } from "crypto";
 import ContractsContext from "../contexts/Contracts";
 import MeContext from "../contexts/Me";
 
-// const BN = ethers.BigNumber;
-
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const { playerInfo, ticketPrice, getTicketInfo } = useContext(MeContext);
