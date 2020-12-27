@@ -1,18 +1,34 @@
 import React, { useContext, useCallback, useState } from "react";
-import { Box, Button, Typography } from "@material-ui/core";
-// import { Alert } from "@material-ui/lab";
+import { Box, Button, Typography, Snackbar } from "@material-ui/core";
+import MuiAlert, { AlertProps } from "@material-ui/lab/Alert";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import { ethers } from "ethers";
 
 import { randomBytes } from "crypto";
 import ContractsContext from "../contexts/Contracts";
 import MeContext from "../contexts/Me";
 
+function Alert(props: AlertProps) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
+
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
   const { playerInfo, ticketPrice, getTicketInfo } = useContext(MeContext);
   const [error, setError] = useState<string>();
+  const [isBuying, setIsBuying] = useState<boolean>(false);
 
-  const handleBuy = useCallback(async () => {
+  const handleCloseBuyingAlert = (
+    event?: React.SyntheticEvent,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setIsBuying(false);
+  };
+
+  const _handleBuy = useCallback(async () => {
     const { contract } = whiteElephant;
     if (!contract || ticketPrice === -1) {
       console.debug("no contract instance");
@@ -36,9 +52,16 @@ const Ticket: React.FC = () => {
     } catch (err) {
       console.error(err);
       // todo: avoid showing unknown when tx is rejected by user
-      setError(err?.data?.message || "unknown");
+      setError(err?.data?.message ?? "unknown");
     }
   }, [getTicketInfo, ticketPrice, whiteElephant]);
+
+  const handleBuy = useCallback(async () => {
+    Promise.resolve()
+      .then(() => setIsBuying(true))
+      .then(() => _handleBuy())
+      .then(() => setIsBuying(false));
+  }, [_handleBuy]);
 
   return (
     <Box>
@@ -75,6 +98,19 @@ const Ticket: React.FC = () => {
           )}
         </Box>
       </Box>
+      <Snackbar
+        open={isBuying}
+        // autoHideDuration={6000}
+        onClose={handleCloseBuyingAlert}
+      >
+        <Alert onClose={handleCloseBuyingAlert} severity="info">
+          Buying thy ticket. Standby...
+          <CircularProgress
+            color="secondary"
+            style={{ height: "18px", width: "18px", marginLeft: "0.5em" }}
+          />
+        </Alert>
+      </Snackbar>
       {/* <Alert variant="outlined" severity="success">
         This is a success alert — check it out!
       </Alert> */}

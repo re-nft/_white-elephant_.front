@@ -18,11 +18,9 @@ contract WhiteElephant is
     ReentrancyGuard
 {
     struct Info {
-        address nft;
-        uint256 tokenId;
+        uint8 nftIx; // assumes a maximum of 256 nfts for the event. Index in allNfts
         bytes32 randomnessRequestId;
         bytes32 stealerRequestId;
-        uint16 orderNum;
         bool hasTicket;
         bool wasStolenFrom;
         bool exists;
@@ -38,16 +36,23 @@ contract WhiteElephant is
     //   mapping(address => bool) isIn;
     // }
 
-    mapping(address => Info) private info;
+    /// info regarding players
+    mapping(address => Info) internal info;
+    /// @dev keys of the above
+    address[] public players;
+    /// list of all the deposited NFTs
+    /// @dev can't be greater than 256. There is a constraint in info
+    /// @dev done purely for gas optimisation purposes. The chunks
+    /// @dev haven't been computed, so may be completely useless.
+    /// @dev Nevertheless it is hard to imagine us having more NFTs
+    Nft[256] public allNfts;
     /// requestId => randomness
     mapping(bytes32 => uint256) public entropy;
     uint256 public ticketPrice = 0.001 ether;
-    address[] public players;
-    Nft[] public allNfts;
-    /// @dev Chainlink related
+    /// Chainlink request keyhash
     bytes32 private keyHash;
+    /// Chainlink call fee
     uint256 private fee;
-    /// ---------------------
     bool firstBuy = true;
     /// Whose turn it is to unwrap or steal
     address public playersTurn;
