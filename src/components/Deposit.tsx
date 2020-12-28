@@ -42,13 +42,13 @@ const Deposit: React.FC = () => {
   const handleNftAddress = (e: React.ChangeEvent) => {
     e.persist();
     //@ts-ignore
-    setNftAddress(e.target?.value || "");
+    setNftAddress(e.target?.value ?? "");
   };
 
   const handleTokenId = (e: React.ChangeEvent) => {
     e.persist();
     //@ts-ignore
-    setTokenId(e.target?.value || "");
+    setTokenId(e.target?.value ?? "");
   };
 
   const approveAll = () => {

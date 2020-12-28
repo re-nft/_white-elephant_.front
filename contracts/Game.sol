@@ -195,12 +195,7 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     }
 
     /// @param missed - how many players missed their turn since lastAction
-    /// @param sender - index of msg.sender in playersOrder
-    function unwrap(uint8 missed, uint8 sender)
-        external
-        afterGameStart
-        nonReentrant
-    {
+    function unwrap(uint8 missed) external afterGameStart nonReentrant {
         uint256 currTime = now;
         // someone has skipped their turn. We track this on the front-end
         if (missed != 0) {
@@ -214,12 +209,18 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
             );
             currPlayer += (missed + 1);
             require(currPlayer < 256, "cant be too careful sequel");
-            require(playersOrder[currPlayer - 1] == sender, "woopsie daisy");
+            require(
+                players[playersOrder[currPlayer - 1]] == msg.sender,
+                "woopsie daisy"
+            );
         } else {
-            require(playersOrder[currPlayer] == sender, "not your turn");
+            require(
+                players[playersOrder[currPlayer]] == msg.sender,
+                "not your turn"
+            );
             currPlayer += 1;
         }
-        lastAction = currTime;
+        lastAction = uint32(currTime);
     }
 
     /// @param from - index from playersOrder arr that you are stealing from
@@ -237,7 +238,7 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
         require(playersOrder[currPlayer] == sender, "not your order");
         // todo:
         currPlayer += 1;
-        lastAction = now;
+        lastAction = uint32(now);
     }
 
     /// Will revert the safeTransfer
