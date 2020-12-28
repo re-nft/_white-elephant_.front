@@ -48,6 +48,8 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     /// of indices like 0, 1, 2 and so on to addresses which are then duplicated
     /// as well in the players array
     uint8[256] public playersOrder;
+    /// Chainlink entropies
+    uint256[8] public entropies;
     /// this array tracks the addresses of all the players that will participate in the game
     /// these guys bought the ticket before `gameStart`
     address[256] public players;
@@ -60,6 +62,38 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     /// for onlyOwner use only, this lets the contract know who is allowed to
     /// deposit the NFTs into the prize pool
     mapping(address => bool) public depositors;
+    /// flag that indicates if the game is ready to start
+    /// after people bought the tickets, owners initialize the
+    /// contract with chainlink entropy. Before this is done
+    /// the game cannot begin
+    bool initComplete = false;
+
+    /// we slice up Chainlink's uint256 into 32 chunks to obtaink 32 uint8 vals
+    /// each one now represents the order of the ticket buyers, which also
+    /// represents the NFT that they will unwrap (unless swapped with)
+    function initStart(uint8 numCalls, uint256[] calldata ourEntropy)
+        external
+        onlyOwner
+        afterGameStart
+    {
+        require(numCalls == ourEntropy.length, "incorrect entropy size");
+        for (uint256 i = 0; i < numCalls; i++) {
+            getRandomness(ourEntropy[i]);
+        }
+    }
+
+    /// After slicing the Chainlink entropy off-chain, give back the randomness
+    /// result here. The technique which will be used must be voiced prior to the
+    /// game, obviously
+    function initEnd(uint8[256] calldata _playersOrder)
+        external
+        onlyOwner
+        afterGameStart
+    {
+        require(_playersOrder.length == players.length, "incorrect len");
+        playersOrder = _playersOrder;
+        initComplete = true;
+    }
 
     /// @dev at this point we have a way to track all of the players - players
     /// @dev we have the NFT that each player will win (unless stolen from) - playersOrder
@@ -72,6 +106,7 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
 
     modifier afterGameStart() {
         require(block.timestamp > TIME_gameStart, "game has not started yet");
+        require(initComplete, "game has not initialized yet");
         _;
     }
 
@@ -80,6 +115,9 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
         _;
     }
 
+    /// Add who is allowed to deposit NFTs with this function
+    /// All addresses that are not whitelisted will not be
+    /// allowed to deposit.
     function addDepositors(address[] calldata ds) external onlyOwner {
         for (uint256 i = 0; i < ds.length; i++) {
             depositors[ds[i]] = true;
@@ -90,9 +128,8 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
         public
         VRFConsumerBase(CHAINLINK_VRF_COORDINATOR, CHAINLINK_LINK_TOKEN)
     {
-        keyHash = CHAINLINK_REQUEST_KEY_HASH;
-        fee = CHAINLINK_LINK_CALL_FEE;
-
+        // keyHash = CHAINLINK_REQUEST_KEY_HASH;
+        // fee = CHAINLINK_LINK_CALL_FEE;
         depositors[0x465DCa9995D6c2a81A9Be80fBCeD5a770dEE3daE] = true;
         depositors[0x426923E98e347158D5C471a9391edaEa95516473] = true;
         depositors[0x63A556c75443b176b5A4078e929e38bEb37a1ff2] = true;
@@ -114,13 +151,29 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
         players[players.length] = msg.sender;
     }
 
-    function getRandomness() internal returns (bytes32 requestId) {}
+    /// Randomness is queried afterGameStart but before initComplete (flag)
+    function getRandomness(uint256 ourEntropy)
+        internal
+        returns (bytes32 requestId)
+    {
+        require(
+            LINK.balanceOf(address(this)) >= CHAINLINK_LINK_CALL_FEE,
+            "not enough LINK"
+        );
+        requestId = requestRandomness(
+            CHAINLINK_REQUEST_KEY_HASH,
+            CHAINLINK_LINK_CALL_FEE,
+            ourEntropy
+        );
+    }
 
     /// Gets called by Chainlink
     function fulfillRandomness(bytes32 requestId, uint256 randomness)
         internal
         override
-    {}
+    {
+        entropies[entropies.length] = randomness;
+    }
 
     function unwrap() external afterGameStart {}
 
