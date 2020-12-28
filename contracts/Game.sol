@@ -25,16 +25,16 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     uint256 private fee;
 
     /// @dev Miners can manipulate up to this much seconds
-    uint256 private TIME_MINERS_MAX_MANIPULATION = 900;
+    uint16 private TIME_MINERS_MAX_MANIPULATION = 900;
 
     uint256 public ticketPrice = 0.0001 ether;
     /// @dev before this date, you can be buying tickets. After this date, unwrapping begins
-    uint256 private TIME_beforeGameStart = 1609095600;
+    uint32 public TIME_beforeGameStart = 1609095600;
     /// @dev I have read miners can manipulate block time for up to 900 seconds
     /// @dev I am creating two times here to ensure that there is no overlap
     /// @dev To avoid a situation where both are true
     /// @dev 2 * 900 = 1800 gives extra cushion
-    uint256 private TIME_gameStart =
+    uint32 private TIME_gameStart =
         TIME_beforeGameStart + 2 * TIME_MINERS_MAX_MANIPULATION;
 
     struct Nft {
@@ -47,6 +47,8 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     /// indices 231, 0, 3 and so on from the players array. We avoid having a map
     /// of indices like 0, 1, 2 and so on to addresses which are then duplicated
     /// as well in the players array
+    /// Interpretation of this is that if at index 0 in playersOrder we have index 3
+    /// then that means that player players[3] is the one to go first
     uint8[256] public playersOrder;
     /// Chainlink entropies
     uint256[8] public entropies;
@@ -59,6 +61,9 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     /// think of it as a swap of NFTs
     /// once again the address is the index in players array
     mapping(uint8 => uint8) public swaps;
+    /// efficient reverse lookup at the expense of extra storage
+    /// forgive me
+    mapping(uint8 => uint8) public spaws;
     /// for onlyOwner use only, this lets the contract know who is allowed to
     /// deposit the NFTs into the prize pool
     mapping(address => bool) public depositors;
@@ -67,6 +72,20 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     /// contract with chainlink entropy. Before this is done
     /// the game cannot begin
     bool initComplete = false;
+    /// tracks the last time a valid steal or unwrap call was made
+    /// this serves to signal if any of the players missed their turn
+    /// when a player misses their turn, they forego the ability to
+    /// steal from someone who unwrapped before them
+    /// Initially this gets set in the initEnd by owner, when they complete
+    /// the initialization of the game
+    uint32 lastAction;
+    /// this is how much time in seconds each player has to unwrap
+    /// or steal. If they do not act, they forego their ability
+    /// to steal. 3 hours each player times 256 players max is 768 hours
+    /// which equates to 32 days.
+    uint16 thinkTime = 10800;
+    /// index from playersOrder of current unwrapper / stealer
+    uint8 currPlayer = 0;
 
     /// we slice up Chainlink's uint256 into 32 chunks to obtaink 32 uint8 vals
     /// each one now represents the order of the ticket buyers, which also
@@ -175,9 +194,51 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
         entropies[entropies.length] = randomness;
     }
 
-    function unwrap() external afterGameStart {}
+    /// @param missed - how many players missed their turn since lastAction
+    /// @param sender - index of msg.sender in playersOrder
+    function unwrap(uint8 missed, uint8 sender)
+        external
+        afterGameStart
+        nonReentrant
+    {
+        uint256 currTime = now;
+        // someone has skipped their turn. We track this on the front-end
+        if (missed != 0) {
+            uint256 elapsed = currTime - lastAction;
+            uint256 playersSkipped = elapsed / thinkTime;
+            require(playersSkipped > 0, "zero players skipped");
+            require(playersSkipped < 256, "cant be too careful");
+            require(
+                playersSkipped == missed,
+                "this never should have happened"
+            );
+            currPlayer += (missed + 1);
+            require(currPlayer < 256, "cant be too careful sequel");
+            require(playersOrder[currPlayer - 1] == sender, "woopsie daisy");
+        } else {
+            require(playersOrder[currPlayer] == sender, "not your turn");
+            currPlayer += 1;
+        }
+        lastAction = currTime;
+    }
 
-    function steal() external afterGameStart {}
+    /// @param from - index from playersOrder arr that you are stealing from
+    function steal(uint8 from, uint8 sender)
+        external
+        afterGameStart
+        nonReentrant
+    {
+        // todo: houston we have a zero-indexing problem here
+        // what if this is a feature of the game? i.e. noone can
+        // steal from the player who goes first? That even makes it
+        // fairer, since the first player can't steal from anyone.
+        // This, however makes the burden fall on the second player.
+        require(spaws[from] == 0, "cant steal from them again");
+        require(playersOrder[currPlayer] == sender, "not your order");
+        // todo:
+        currPlayer += 1;
+        lastAction = now;
+    }
 
     /// Will revert the safeTransfer
     /// on transfer nothing happens, the NFT is not added to the prize pool
