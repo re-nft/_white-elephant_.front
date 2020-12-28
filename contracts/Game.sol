@@ -119,12 +119,12 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     /// @dev we have a way to determine which NFT the player will get if stolen from - swaps
 
     modifier beforeGameStart() {
-        require(block.timestamp < TIME_beforeGameStart, "game has now begun");
+        require(now < TIME_beforeGameStart, "game has now begun");
         _;
     }
 
     modifier afterGameStart() {
-        require(block.timestamp > TIME_gameStart, "game has not started yet");
+        require(now > TIME_gameStart, "game has not started yet");
         require(initComplete, "game has not initialized yet");
         _;
     }
@@ -197,29 +197,32 @@ contract Game is Ownable, ERC721Holder, VRFConsumerBase, ReentrancyGuard {
     /// @param missed - how many players missed their turn since lastAction
     function unwrap(uint8 missed) external afterGameStart nonReentrant {
         uint256 currTime = now;
+        require(currTime > lastAction, "timestamps are incorrect");
+        uint256 elapsed = currTime - lastAction;
+        uint256 playersSkipped = elapsed / thinkTime;
         // someone has skipped their turn. We track this on the front-end
         if (missed != 0) {
-            uint256 elapsed = currTime - lastAction;
-            uint256 playersSkipped = elapsed / thinkTime;
             require(playersSkipped > 0, "zero players skipped");
-            require(playersSkipped < 256, "cant be too careful");
-            require(
-                playersSkipped == missed,
-                "this never should have happened"
-            );
-            currPlayer += (missed + 1);
-            require(currPlayer < 256, "cant be too careful sequel");
-            require(
-                players[playersOrder[currPlayer - 1]] == msg.sender,
-                "woopsie daisy"
-            );
-        } else {
+            require(playersSkipped < 256, "too many players skipped");
+            // validation that the front-end computation is correct
+            require(playersSkipped == missed, "playersSkipped not eq missed");
+            // this must be us now
+            currPlayer += missed;
+            // note that the max value is 255
+            require(currPlayer < 256, "currPlayer exceeds 255");
             require(
                 players[playersOrder[currPlayer]] == msg.sender,
                 "not your turn"
             );
-            currPlayer += 1;
+        } else {
+            require(playersSkipped == 0, "playersSkipped not zero");
+            require(
+                players[playersOrder[currPlayer]] == msg.sender,
+                "not your turn"
+            );
         }
+        // advance the game
+        currPlayer += 1;
         lastAction = uint32(currTime);
     }
 
