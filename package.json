@@ -8,11 +8,13 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@openzeppelin/contracts": "^3.3.0",
+    "@typechain/ethers-v5": "^5.0.0",
     "@types/react": "^16.14.2",
     "@types/react-dom": "^16.9.8",
     "@types/react-router-dom": "^5.1.6",
     "crypto": "^1.0.1",
     "ethers": "^5.0.0",
+    "hardhat-typechain": "^0.3.4",
     "history": "^5.0.0",
     "ipfs": "^0.52.2",
     "node-sass": "^4.0.0",
@@ -20,6 +22,8 @@
     "react-dom": "^16.8.6",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^3.2.0",
+    "ts-generator": "^0.1.1",
+    "typechain": "^4.0.1",
     "typescript": "^4.0.3"
   },
   "scripts": {
@@ -50,9 +54,11 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
+    "@nomiclabs/hardhat-etherscan": "^2.1.0",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "ethereum-waffle": "^3.2.0",
     "hardhat": "^2.0.5",
+    "hardhat-spdx-license-identifier": "^2.0.2",
     "test-ipfs-example": "^2.0.3"
   }
 }

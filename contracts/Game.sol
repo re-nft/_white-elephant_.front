@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 /// @author Nazariy Vavryk [nazariy@inbox.ru] - reNFT Labs [https://twitter.com/renftlabs]
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.12;

@@ -1,4 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-etherscan"); /// to verify the contracts
+require("hardhat-spdx-license-identifier"); // to automatically prepand the spdx license field
+require("hardhat-typechain");
 const fs = require("fs");
 
 const defaultNetwork = "localhost";
@@ -32,6 +35,17 @@ task("write-abis", "Writes the abis", async (taskArgs, hre, runSuper) => {
  */
 module.exports = {
   defaultNetwork,
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  spdxLicenseIdentifier: {
+    overwrite: true,
+    runOnCompile: true,
+  },
+  typechain: {
+    outDir: "src/typechain",
+    target: "ethers-v5",
+  },
   networks: {
     hardhat: {
       chainId: 1337,
