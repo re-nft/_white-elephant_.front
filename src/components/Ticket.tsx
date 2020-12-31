@@ -4,9 +4,9 @@ import MuiAlert, { AlertProps } from "@material-ui/lab/Alert";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { ethers } from "ethers";
 
-import { randomBytes } from "crypto";
+// import { randomBytes } from "crypto";
 import ContractsContext from "../contexts/Contracts";
-import MeContext from "../contexts/Me";
+// import MeContext from "../contexts/Me";
 
 function Alert(props: AlertProps) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -14,7 +14,8 @@ function Alert(props: AlertProps) {
 
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
-  const { playerInfo, ticketPrice, getTicketInfo } = useContext(MeContext);
+  const ticketPrice = 0.5;
+  // const { ticketPrice, getTicketInfo } = useContext(MeContext);
   const [error, setError] = useState<string>();
   const [isBuying, setIsBuying] = useState<boolean>(false);
 
@@ -30,7 +31,7 @@ const Ticket: React.FC = () => {
 
   const _handleBuy = useCallback(async () => {
     const { contract } = whiteElephant;
-    if (!contract || ticketPrice === -1) {
+    if (!contract) {
       console.debug("no contract instance");
       return;
     }
@@ -38,23 +39,21 @@ const Ticket: React.FC = () => {
       value: ethers.utils.parseEther(String(ticketPrice)),
     };
     try {
-      const value = randomBytes(32);
-      // console.debug(`user entropy is: 0x${value.toString("hex")}`);
-      const tx = await contract.buyTicket(
-        `0x${value.toString("hex")}`,
-        overrides
-      );
+      // const value = randomBytes(32);
+      const tx = await contract.buyTicket(overrides);
       // await the mining of a single block for confirmation
       await tx.wait(1);
       // trigger update after successful ticket buy
-      await getTicketInfo();
+      // await getTicketInfo();
       setError("");
     } catch (err) {
-      console.error(err);
+      if (err?.code === 4001) {
+        return;
+      }
       // todo: avoid showing unknown when tx is rejected by user
       setError(err?.data?.message ?? "unknown");
     }
-  }, [getTicketInfo, ticketPrice, whiteElephant]);
+  }, [whiteElephant]);
 
   const handleBuy = useCallback(async () => {
     Promise.resolve()
@@ -70,32 +69,30 @@ const Ticket: React.FC = () => {
           <Box
             style={{ textAlign: "center", margin: "0.5em", paddingTop: "2em" }}
           >
-            {!playerInfo.hasTicket && ticketPrice !== -1 && (
-              <Box>
-                <h1 style={{ paddingBottom: "0.5em" }}>{ticketPrice} ETH</h1>
-                <Button variant="outlined" onClick={handleBuy}>
-                  Buy
-                </Button>
-                {error && (
-                  <Typography
-                    style={{
-                      color: "red",
-                      fontWeight: "bold",
-                      paddingTop: "0.5em",
-                    }}
-                  >
-                    {error}
-                  </Typography>
-                )}
-              </Box>
-            )}
+            <Box>
+              <h1 style={{ paddingBottom: "0.5em" }}>{ticketPrice} ETH</h1>
+              <Button variant="outlined" onClick={handleBuy}>
+                Buy
+              </Button>
+              {error && (
+                <Typography
+                  style={{
+                    color: "red",
+                    fontWeight: "bold",
+                    paddingTop: "0.5em",
+                  }}
+                >
+                  {error}
+                </Typography>
+              )}
+            </Box>
           </Box>
           <Box className="ticket__text">TICKET</Box>
-          {playerInfo.hasTicket && (
-            <Box style={{ margin: "1em" }}>
-              <span className="rainbow-text">YoU ArE In IT To WIN It</span>
-            </Box>
-          )}
+          {/* {playerInfo.hasTicket && ( */}
+          <Box style={{ margin: "1em" }}>
+            <span className="rainbow-text">YoU ArE In IT To WIN It</span>
+          </Box>
+          {/* )} */}
         </Box>
       </Box>
       <Snackbar

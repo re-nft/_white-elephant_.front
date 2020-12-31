@@ -52,10 +52,10 @@ const Intro: React.FC = () => {
         <h1 style={{ marginBottom: "1em" }}>Rules</h1>
         <ul>
           <li>1. Single ticket per unique address</li>
-          <li>2. On Christmas day, take turns to unwrap or steal</li>
+          <li>2. On Jan 3rd 23:59:59 GMT, take turns to unwrap or steal</li>
           <li>3. By the end of the event, presents get delivered by Santa</li>
           <li>
-            4. Player whose turn it is has 1 day to unwrap. If they do not
+            4. Player whose turn it is has 3 hours to unwrap. If they do not
             unwrap or steal in time, a random NFT is assigned to them
           </li>
           <li style={{ marginTop: "1em" }}>

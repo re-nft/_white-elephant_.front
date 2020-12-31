@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useContext } from "react";
 import { Button, Box, Typography } from "@material-ui/core";
-import { ethers } from "ethers";
+// import { ethers } from "ethers";
 
-import usePoller from "../hooks/Poller";
+// import usePoller from "../hooks/Poller";
 import ContractsContext from "../contexts/Contracts";
-import DappContext from "../contexts/Dapp";
-import MeContext from "../contexts/Me";
+// import DappContext from "../contexts/Dapp";
+// import MeContext from "../contexts/Me";
 
 type StealT = {
   currOwner: string;
@@ -32,57 +32,59 @@ const StealButton: React.FC<StealButtonProps> = ({ onSteal, from }) => {
 };
 
 const Steal = () => {
-  const { address } = useContext(DappContext);
+  // const { address } = useContext(DappContext);
   const { whiteElephant } = useContext(ContractsContext);
-  const { shortcutFetchMedia } = useContext(MeContext);
+  // const { shortcutFetchMedia } = useContext(MeContext);
   const [available] = useState<StealT[]>([]);
   const [, setError] = useState<string>("");
 
-  const isZeroAddress = (_nft: string) => ethers.constants.AddressZero === _nft;
-  const sameAddress = (addr1: string, addr2: string) =>
-    addr1.toLowerCase() === addr2.toLowerCase();
+  // const isZeroAddress = (_nft: string) => ethers.constants.AddressZero === _nft;
+  // const sameAddress = (addr1: string, addr2: string) =>
+  //   addr1.toLowerCase() === addr2.toLowerCase();
 
   // responsible for polling the nfts that can be stolen
   // by the user
-  const handleSteal = useCallback(async () => {
-    const { contract } = whiteElephant;
-    if (!contract) return;
+  // const handleSteal = useCallback(async () => {
+  //   const { contract } = whiteElephant;
+  //   if (!contract) return;
 
-    // everything that is above this number
-    // and that has not been stolen from yet
-    // can be stolen from
-    const myTurn = await contract.playersTurn();
+  //   // everything that is above this number
+  //   // and that has not been stolen from yet
+  //   // can be stolen from
+  //   const myTurn = await contract.playersTurn();
 
-    // players before me
-    const stealFrom: StealT[] = [];
-    for (let i = 0; i < myTurn; i++) {
-      const player = await contract.getPlayerNumber(i);
-      const [nft, tokenId, , , wasStolenFrom, ,] = await contract.getPlayerInfo(
-        player
-      );
+  //   // players before me
+  //   const stealFrom: StealT[] = [];
+  //   for (let i = 0; i < myTurn; i++) {
+  //     const player = await contract.getPlayerNumber(i);
+  //     const [nft, tokenId, , , wasStolenFrom, ,] = await contract.getPlayerInfo(
+  //       player
+  //     );
 
-      const resolvedNft = String(nft);
-      const resolvedId = String(tokenId);
+  //     // const resolvedNft = String(nft);
+  //     // const resolvedId = String(tokenId);
 
-      let blob = await shortcutFetchMedia({
-        nftAddress: resolvedNft,
-        tokenId: resolvedId,
-      });
+  //     // let blob = await shortcutFetchMedia({
+  //     //   nftAddress: resolvedNft,
+  //     //   tokenId: resolvedId,
+  //     // });
 
-      if (!blob) blob = new Blob();
-      if (wasStolenFrom || isZeroAddress(nft) || sameAddress(player, address)) {
-        console.debug("can't steal here");
-      }
-      stealFrom.push({
-        currOwner: player,
-        nftAddress: nft,
-        tokenId: tokenId.toNumber(),
-        media: blob,
-      });
-    }
+  //     let blob = new Blob();
 
-    // setAvailable(stealFrom);
-  }, [whiteElephant, address, shortcutFetchMedia]);
+  //     if (!blob) blob = new Blob();
+  //     if (wasStolenFrom || isZeroAddress(nft) || sameAddress(player, address)) {
+  //       console.debug("can't steal here");
+  //     }
+  //     stealFrom.push({
+  //       currOwner: player,
+  //       nftAddress: nft,
+  //       tokenId: tokenId.toNumber(),
+  //       media: blob,
+  //     });
+  //   }
+
+  //   // setAvailable(stealFrom);
+  // }, [whiteElephant, address]);
 
   const stealNft = useCallback(
     async (currOwner: string) => {
@@ -99,7 +101,7 @@ const Steal = () => {
     [whiteElephant]
   );
 
-  usePoller(handleSteal, 20000);
+  // usePoller(handleSteal, 20000);
 
   return (
     <Box>
