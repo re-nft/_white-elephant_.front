@@ -1,13 +1,11 @@
 {
   "name": "renft-white-elephant",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "license": "MIT",
   "dependencies": {
-    "@chainlink/contracts": "^0.0.11",
     "@material-ui/core": "^4.11.2",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.57",
-    "@openzeppelin/contracts": "^3.3.0",
     "@types/react": "^16.14.2",
     "@types/react-dom": "^16.9.8",
     "@types/react-router-dom": "^5.1.6",
@@ -26,10 +24,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "deploy-local": "hardhat run scripts/deploy.js && yarn hardhat write-abis",
-    "deploy-goerli": "hardhat --network goerli run scripts/deploy.js && yarn hardhat write-abis",
-    "deploy-kovan": "hardhat --network kovan run scripts/deploy.js && yarn hardhat write-abis"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
@@ -47,12 +42,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.1",
-    "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "ethereum-waffle": "^3.2.0",
-    "hardhat": "^2.0.5",
-    "test-ipfs-example": "^2.0.3"
   }
 }

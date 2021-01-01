@@ -24,12 +24,22 @@ const Deposit: React.FC = () => {
         whiteElephantAddr,
         tokenId
       );
-
       if (!isApproved) {
         await erc721.approve(nftAddress, whiteElephantAddr, tokenId);
       }
-
-      await contract.depositNft(nftAddress, tokenId);
+      let nfts: string[] = [];
+      let tokenIds: string[] = [];
+      if (nftAddress.includes(",")) {
+        nfts = nftAddress.split(",");
+        tokenIds = tokenId.split(",");
+      } else {
+        nfts = [nftAddress];
+        tokenIds = [tokenId];
+      }
+      if (nfts.length !== tokenIds.length) return;
+      // const gasValue = await contract.estimate.deposit(nfts, tokenIds);
+      // const gasEstimate = await contract.estimateGas["deposit"](nfts, tokenIds);
+      await contract.deposit(nfts, tokenIds);
       setError("");
     } catch (err) {
       console.error(err);
@@ -51,12 +61,22 @@ const Deposit: React.FC = () => {
     setTokenId(e.target?.value ?? "");
   };
 
-  const approveAll = () => {
+  const approveAll = async () => {
     const { whiteElephant: whiteElephantAddr } = addresses;
-    if (!nftAddress || !whiteElephantAddr) return;
-
+    if (!nftAddress || !whiteElephantAddr) {
+      console.warn("no nft addr or white elephant addr");
+      return;
+    }
+    let nfts = [];
+    if (nftAddress.includes(",")) {
+      nfts = nftAddress.split(",");
+    } else {
+      nfts = [nftAddress];
+    }
     try {
-      erc721.approve(nftAddress, whiteElephantAddr);
+      for (const nft of nfts) {
+        await erc721.approve(nft, whiteElephantAddr);
+      }
     } catch (err) {
       console.error("could not approve all");
       setError(err?.error?.message);
@@ -104,17 +124,22 @@ const Deposit: React.FC = () => {
       <Typography style={{ marginTop: "2em" }}>
         Which NFT are you depositing?
       </Typography>
-      {/* todo: add the opensea listed nfts here */}
+      <Typography>
+        If you want to bulk deposit, add comma after each nft address (with not
+        whitespace): e.g. 0x123,0x2221
+        <br />
+        Same goes for the token id
+      </Typography>
       <Box style={{ display: "flex", flexDirection: "column" }}>
         <Box>
           <TextField
-            label="NFT address"
+            label="NFT address(es)"
             onChange={handleNftAddress}
             style={{ marginRight: "2em" }}
           >
             {nftAddress}
           </TextField>
-          <TextField label="Token ID" onChange={handleTokenId}>
+          <TextField label="Token ID(s)" onChange={handleTokenId}>
             {tokenId}
           </TextField>
         </Box>

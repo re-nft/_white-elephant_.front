@@ -14,8 +14,7 @@ function Alert(props: AlertProps) {
 
 const Ticket: React.FC = () => {
   const { whiteElephant } = useContext(ContractsContext);
-  const ticketPrice = 0.5;
-  // const { ticketPrice, getTicketInfo } = useContext(MeContext);
+  const ticketPrice = 0.1;
   const [error, setError] = useState<string>();
   const [isBuying, setIsBuying] = useState<boolean>(false);
 
@@ -50,6 +49,7 @@ const Ticket: React.FC = () => {
       if (err?.code === 4001) {
         return;
       }
+      console.error(err);
       // todo: avoid showing unknown when tx is rejected by user
       setError(err?.data?.message ?? "unknown");
     }
