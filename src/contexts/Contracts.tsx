@@ -7,7 +7,8 @@ import React, {
 } from "react";
 import { ethers } from "ethers";
 
-import { Game } from "../typechain/Game";
+//@ts-ignore
+import { Game } from "../typechain/Game.d.ts";
 import { GameFactory } from "../typechain/GameFactory";
 import DappContext from "./Dapp";
 import { abis as _abis } from "../contracts";
