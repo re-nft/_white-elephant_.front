@@ -27,7 +27,6 @@ yarn.lock
 .vscode
 bin/contracts
 build
-*.d.ts
 artifacts
 cache
 all.addresses
