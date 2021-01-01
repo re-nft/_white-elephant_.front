@@ -7,10 +7,10 @@ import React, {
 } from "react";
 import { ethers } from "ethers";
 
-import { Game } from "../typechain/Game";
-import { GameFactory } from "../typechain/GameFactory";
 import DappContext from "./Dapp";
 import { abis as _abis } from "../contracts";
+import { Game } from "../typechain/Game";
+import { GameFactory } from "../typechain/GameFactory";
 
 type Optional<T> = T | undefined;
 type Contract = ethers.Contract;
