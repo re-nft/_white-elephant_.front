@@ -7,8 +7,9 @@ import React, {
 } from "react";
 import { ethers } from "ethers";
 
+// vercel build apes out if I don't include the .d.ts extension
 //@ts-ignore
-import { Game } from "../typechain/Game.d.ts";
+// import { Game } from "../typechain/Game.d.ts";
 import { GameFactory } from "../typechain/GameFactory";
 import DappContext from "./Dapp";
 import { abis as _abis } from "../contracts";
@@ -19,7 +20,7 @@ type Address = string;
 
 type ContractsContextType = {
   whiteElephant: {
-    contract?: Game;
+    contract?: any;
   };
   erc721: {
     contract: (at: string) => Optional<Contract>;
@@ -53,7 +54,7 @@ const ContractsContext = createContext<ContractsContextType>(
 
 export const ContractsContextProvider: React.FC = ({ children }) => {
   const { signer, addresses, abis, address } = useContext(DappContext);
-  const [elephantContract, setElephantContract] = useState<Game>();
+  const [elephantContract, setElephantContract] = useState<any>();
   const getContract = useCallback(async () => {
     if (!addresses || !signer || !abis.whiteElephant) {
       console.debug("no addresses, signer, or abi");
